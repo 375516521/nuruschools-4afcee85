@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/fees'
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
 import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/marks'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
@@ -43,6 +44,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
+  id: '/fees',
+  path: '/fees',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedIdCardsRoute = AuthenticatedIdCardsRouteImport.update({
   id: '/id-cards',
   path: '/id-cards',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/marks': typeof AuthenticatedMarksRoute
   '/students': typeof AuthenticatedStudentsRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/marks': typeof AuthenticatedMarksRoute
   '/students': typeof AuthenticatedStudentsRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
   '/_authenticated/marks': typeof AuthenticatedMarksRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/dashboard'
+    | '/fees'
     | '/id-cards'
     | '/marks'
     | '/students'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/dashboard'
+    | '/fees'
     | '/id-cards'
     | '/marks'
     | '/students'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/_authenticated/dashboard'
+    | '/_authenticated/fees'
     | '/_authenticated/id-cards'
     | '/_authenticated/marks'
     | '/_authenticated/students'
@@ -175,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fees': {
+      id: '/_authenticated/fees'
+      path: '/fees'
+      fullPath: '/fees'
+      preLoaderRoute: typeof AuthenticatedFeesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/id-cards': {
       id: '/_authenticated/id-cards'
       path: '/id-cards'
@@ -208,6 +227,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedIdCardsRoute: typeof AuthenticatedIdCardsRoute
   AuthenticatedMarksRoute: typeof AuthenticatedMarksRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
@@ -215,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedIdCardsRoute: AuthenticatedIdCardsRoute,
   AuthenticatedMarksRoute: AuthenticatedMarksRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
