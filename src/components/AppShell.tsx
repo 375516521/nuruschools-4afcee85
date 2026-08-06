@@ -89,7 +89,7 @@ export function AppShell({ title, subtitle, actions, children }: {
   children: ReactNode;
 }) {
   const { data: session } = useSession();
-  const term = useActiveTerm((session?.profile as { school_id?: string } | null)?.school_id);
+  const { data: term } = useActiveTerm((session?.profile as { school_id?: string } | null)?.school_id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
