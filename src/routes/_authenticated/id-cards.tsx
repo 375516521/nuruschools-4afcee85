@@ -47,11 +47,13 @@ function IdCardsPage() {
     mutationFn: async (form: FormData) => {
       const start = Number(form.get("start"));
       const upto = Number(form.get("upto"));
+      const prefix = String(form.get("prefix") ?? "").trim().toUpperCase();
+      if (!prefix) throw new Error("Enter an ID prefix, e.g. SDA-G4.");
       if (!Number.isInteger(start) || !Number.isInteger(upto) || start < 1 || upto < start) {
         throw new Error("Enter a valid range — 'up to' must be greater than 'start from'.");
       }
       const { error } = await supabase.from("grade_id_configs").upsert(
-        { school_id: schoolId!, grade_id: gradeId, start_number: start, upto_number: upto },
+        { school_id: schoolId!, grade_id: gradeId, id_prefix: prefix, start_number: start, upto_number: upto },
         { onConflict: "grade_id" },
       );
       if (error) throw error;
