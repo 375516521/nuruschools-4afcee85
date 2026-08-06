@@ -26,11 +26,11 @@ const STATUSES = ["all", "active", "deactivated", "graduated", "archived", "tran
 const learnerSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required").max(60),
   last_name: z.string().trim().min(1, "Last name is required").max(60),
-  gender: z.string().optional(),
+  gender: z.string().nullable(),
   grade_id: z.string().uuid("Select a grade"),
-  stream_id: z.string().uuid().optional().nullable(),
-  guardian_name: z.string().trim().max(80).optional(),
-  guardian_phone: z.string().trim().max(20).optional(),
+  stream_id: z.string().uuid().nullable(),
+  guardian_name: z.string().trim().max(80).nullable(),
+  guardian_phone: z.string().trim().max(20).nullable(),
 });
 
 function StudentsPage() {
