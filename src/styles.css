@@ -156,3 +156,42 @@
     color: var(--color-foreground);
   }
 }
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@utility bg-nuru-hero {
+  background-image:
+    radial-gradient(circle at 15% 15%, oklch(0.46 0.11 163 / 0.18), transparent 45%),
+    radial-gradient(circle at 85% 10%, oklch(0.78 0.14 82 / 0.22), transparent 40%),
+    linear-gradient(180deg, oklch(0.99 0.008 150), oklch(0.96 0.02 155));
+}
+
+@utility bg-nuru-deep {
+  background-image: linear-gradient(140deg, oklch(0.26 0.05 163), oklch(0.34 0.07 168));
+}
+
+@utility text-nuru-gradient {
+  background-image: linear-gradient(100deg, oklch(0.46 0.11 163), oklch(0.7 0.14 100));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility card-nuru {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 2px oklch(0.26 0.05 163 / 0.05), 0 8px 24px -12px oklch(0.26 0.05 163 / 0.18);
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .print-sheet { box-shadow: none !important; border: none !important; }
+}
