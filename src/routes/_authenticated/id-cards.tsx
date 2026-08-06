@@ -81,7 +81,11 @@ function IdCardsPage() {
           </div>
 
           {gradeId ? (
-            <form className="space-y-3 border-t border-border pt-3" onSubmit={(e) => { e.preventDefault(); saveRange.mutate(new FormData(e.currentTarget)); }}>
+            <form key={gradeId} className="space-y-3 border-t border-border pt-3" onSubmit={(e) => { e.preventDefault(); saveRange.mutate(new FormData(e.currentTarget)); }}>
+              <div className="space-y-1.5">
+                <Label htmlFor="prefix">ID prefix</Label>
+                <Input id="prefix" name="prefix" defaultValue={config?.id_prefix ?? `${school?.school_code ?? "SCH"}-`} />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5"><Label htmlFor="start">Start from</Label><Input id="start" name="start" type="number" min={1} defaultValue={config?.start_number ?? 1} /></div>
                 <div className="space-y-1.5"><Label htmlFor="upto">Up to</Label><Input id="upto" name="upto" type="number" min={1} defaultValue={config?.upto_number ?? 100} /></div>
