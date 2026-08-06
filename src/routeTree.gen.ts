@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
+import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/marks'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as VerifyAdmRouteImport } from './routes/verify.$adm'
 
@@ -47,6 +48,11 @@ const AuthenticatedIdCardsRoute = AuthenticatedIdCardsRouteImport.update({
   path: '/id-cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMarksRoute = AuthenticatedMarksRouteImport.update({
+  id: '/marks',
+  path: '/marks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   id: '/students',
   path: '/students',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/parent': typeof ParentRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
+  '/marks': typeof AuthenticatedMarksRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/parent': typeof ParentRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
+  '/marks': typeof AuthenticatedMarksRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/parent': typeof ParentRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
+  '/_authenticated/marks': typeof AuthenticatedMarksRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/dashboard'
     | '/id-cards'
+    | '/marks'
     | '/students'
     | '/verify/$adm'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/dashboard'
     | '/id-cards'
+    | '/marks'
     | '/students'
     | '/verify/$adm'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/_authenticated/dashboard'
     | '/_authenticated/id-cards'
+    | '/_authenticated/marks'
     | '/_authenticated/students'
     | '/verify/$adm'
   fileRoutesById: FileRoutesById
@@ -170,6 +182,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIdCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/marks': {
+      id: '/_authenticated/marks'
+      path: '/marks'
+      fullPath: '/marks'
+      preLoaderRoute: typeof AuthenticatedMarksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/students': {
       id: '/_authenticated/students'
       path: '/students'
@@ -190,12 +209,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedIdCardsRoute: typeof AuthenticatedIdCardsRoute
+  AuthenticatedMarksRoute: typeof AuthenticatedMarksRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedIdCardsRoute: AuthenticatedIdCardsRoute,
+  AuthenticatedMarksRoute: AuthenticatedMarksRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
 }
 
