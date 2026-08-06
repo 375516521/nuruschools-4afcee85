@@ -106,11 +106,19 @@ function SettingsPage() {
         <section className="card-nuru p-5">
           <h2 className="font-display font-semibold">Exams for the active term</h2>
           <p className="mt-1 text-sm text-muted-foreground">Create the assessments teachers will enter marks against.</p>
-          <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); createExam.mutate(new FormData(e.currentTarget)); e.currentTarget.reset(); }}>
-            <Input name="name" placeholder="e.g. Opener Exam" />
-            <Button type="submit" disabled={createExam.isPending || !term}>
-              {createExam.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add
-            </Button>
+          <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); createExam.mutate(new FormData(e.currentTarget)); e.currentTarget.reset(); }}>
+            <Select value={examGrade} onValueChange={setExamGrade}>
+              <SelectTrigger><SelectValue placeholder="Grade this exam is for" /></SelectTrigger>
+              <SelectContent>
+                {(grades ?? []).map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Input name="name" placeholder="e.g. Opener Exam" />
+              <Button type="submit" disabled={createExam.isPending || !term}>
+                {createExam.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add
+              </Button>
+            </div>
           </form>
         </section>
 
