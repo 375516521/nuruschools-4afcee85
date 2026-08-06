@@ -27,6 +27,7 @@ function SettingsPage() {
   const isSuper = roles.includes("superadmin");
   const { data: term } = useActiveTerm(schoolId);
   const [pick, setPick] = useState("");
+  const [examGrade, setExamGrade] = useState("");
 
   const { data: schools } = useQuery({
     queryKey: ["all-schools"],
