@@ -44,12 +44,25 @@ function SettingsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { data: grades } = useQuery({
+    queryKey: ["grades", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () => (await supabase.from("grades").select("id, name").eq("school_id", schoolId!).order("level_order")).data ?? [],
+  });
+
   const createExam = useMutation({
     mutationFn: async (form: FormData) => {
       const name = String(form.get("name") ?? "").trim();
       if (!name) throw new Error("Enter an exam name.");
       if (!term) throw new Error("No active term is set.");
-      const { error } = await supabase.from("exams").insert({ school_id: schoolId!, term_id: term.id, name });
+      if (!examGrade) throw new Error("Choose the grade this exam is for.");
+      const { error } = await supabase.from("exams").insert({
+        school_id: schoolId!,
+        term_id: term.id,
+        academic_year_id: (term as { academic_year_id: string }).academic_year_id,
+        grade_id: examGrade,
+        name,
+      });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Exam created."); void qc.invalidateQueries({ queryKey: ["exams"] }); },
