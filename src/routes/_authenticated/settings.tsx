@@ -59,7 +59,7 @@ function SettingsPage() {
       const { error } = await supabase.from("exams").insert({
         school_id: schoolId!,
         term_id: term.id,
-        academic_year_id: (term as { academic_year_id: string }).academic_year_id,
+        academic_year_id: term.academic_years.id,
         grade_id: examGrade,
         name,
       });
