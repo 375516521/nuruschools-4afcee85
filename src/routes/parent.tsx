@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { GraduationCap, Search, Loader2, Wallet, BookOpen, ArrowLeft, Download } from "lucide-react";
+import { GraduationCap, Search, Loader2, Wallet, BookOpen, ArrowLeft, Download, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
