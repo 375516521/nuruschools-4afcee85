@@ -120,7 +120,7 @@ function Landing() {
               <p className="text-xs text-muted-foreground">per year</p>
               <p className="mt-3 text-sm text-muted-foreground">{p.blurb}</p>
               <ul className="mt-4 space-y-1.5 text-sm">
-                {["Unlimited learners", "Free migration from Zeraki/Schoolsoft", "99.9% uptime SLA"].map((f) => (
+                {["Unlimited learners", "Onsite staff training", "99.9% uptime SLA"].map((f) => (
                   <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 text-success" />{f}</li>
                 ))}
               </ul>
