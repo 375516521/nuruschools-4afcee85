@@ -78,11 +78,76 @@ function FeesPage() {
 
   const totalCollected = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
 
+  const { data: grades } = useQuery({
+    queryKey: ["grades", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () => (await supabase.from("grades").select("id, name").eq("school_id", schoolId!).order("level_order")).data ?? [],
+  });
+
+  const [structOpen, setStructOpen] = useState(false);
+  const [structGrade, setStructGrade] = useState("");
+
+  const addStructure = useMutation({
+    mutationFn: async (form: FormData) => {
+      const item = String(form.get("item") ?? "").trim();
+      const amount = Number(form.get("amount"));
+      if (!term) throw new Error("No active term is set.");
+      if (!structGrade) throw new Error("Choose a grade.");
+      if (!item) throw new Error("Name the fee item.");
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount greater than zero.");
+      const { error } = await supabase.from("fee_structures").insert({
+        school_id: schoolId!,
+        term_id: term.id,
+        academic_year_id: (term as { academic_years: { id: string } }).academic_years.id,
+        grade_id: structGrade,
+        item,
+        amount,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Fee item added to the structure.");
+      setStructOpen(false); setStructGrade("");
+      void qc.invalidateQueries({ queryKey: ["fee-structures"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <AppShell
       title="Fees"
       subtitle={term ? `${ksh(totalCollected)} collected this term` : "No active term"}
       actions={
+        <>
+        <Dialog open={structOpen} onOpenChange={setStructOpen}>
+          <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="size-4" /> Fee structure</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add a fee item</DialogTitle>
+              <DialogDescription>Billed to every learner in the chosen grade for the active term.</DialogDescription>
+            </DialogHeader>
+            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); addStructure.mutate(new FormData(e.currentTarget)); }}>
+              <div className="space-y-1.5">
+                <Label>Grade</Label>
+                <Select value={structGrade} onValueChange={setStructGrade}>
+                  <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
+                  <SelectContent>
+                    {(grades ?? []).map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5"><Label htmlFor="item">Item</Label><Input id="item" name="item" placeholder="Tuition" required /></div>
+                <div className="space-y-1.5"><Label htmlFor="samt">Amount (KSh)</Label><Input id="samt" name="amount" type="number" min={1} required /></div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={addStructure.isPending}>
+                  {addStructure.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add item
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button size="sm"><Plus className="size-4" /> Record payment</Button></DialogTrigger>
           <DialogContent>
