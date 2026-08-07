@@ -149,6 +149,18 @@ function AuthPage() {
           <Button variant="outline" className="w-full" onClick={google}>Continue with Google</Button>
         </div>
 
+        <div className="card-nuru mt-4 p-4">
+          <p className="font-display text-sm font-semibold">First-time setup</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Activates the founder super admin account ({FOUNDER_EMAIL}) with the password{" "}
+            <span className="font-mono font-semibold">{FOUNDER_PASSWORD}</span>. Runs only once — change the
+            password after signing in.
+          </p>
+          <Button variant="secondary" className="mt-3 w-full" disabled={busy} onClick={setupFounder}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null} Activate super admin & sign in
+          </Button>
+        </div>
+
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Parent? <Link to="/parent" className="font-medium text-primary">Check your child's progress</Link> — no login required.
         </p>
