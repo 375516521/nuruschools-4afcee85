@@ -13,8 +13,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Nuru Technologies — CBC School Management System for Kenya" },
       { name: "description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
-      { property: "og:title", content: "Nuru Technologies — CBC School Management System" },
-      { property: "og:description", content: "Admissions, CBC grading, QR ID cards, fees, parent access and AI analytics for Kenyan schools." },
+      { property: "og:title", content: "Nuru Technologies — CBC School Management System for Kenya" },
+      { property: "og:description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

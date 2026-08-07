@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Nuru Technologies — CBC School Management System for Kenya" },
+      { name: "description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Nuru Technologies — CBC School Management System for Kenya" },
+      { property: "og:description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Nuru Technologies — CBC School Management System for Kenya" },
+      { name: "twitter:description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/3c21dc20-21b6-42c9-8f00-b90d953fbbab" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/3c21dc20-21b6-42c9-8f00-b90d953fbbab" },
     ],
     links: [
       {
