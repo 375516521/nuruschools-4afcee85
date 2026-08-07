@@ -110,7 +110,7 @@ function Landing() {
 
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-20">
         <h2 className="font-display text-2xl font-bold md:text-3xl">Simple annual pricing</h2>
-        <p className="mt-2 text-sm text-muted-foreground">All tiers include 24/7 WhatsApp support under 1 hour, two onsite training sessions and free data migration.</p>
+        <p className="mt-2 text-sm text-muted-foreground">All tiers include 24/7 WhatsApp support under 1 hour and two onsite training sessions.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {PLANS.map((p, i) => (
             <article key={p.name} className={`card-nuru p-6 ${i === 1 ? "ring-2 ring-primary" : ""}`}>
@@ -120,7 +120,7 @@ function Landing() {
               <p className="text-xs text-muted-foreground">per year</p>
               <p className="mt-3 text-sm text-muted-foreground">{p.blurb}</p>
               <ul className="mt-4 space-y-1.5 text-sm">
-                {["Unlimited learners", "Free migration from Zeraki/Schoolsoft", "99.9% uptime SLA"].map((f) => (
+                {["Unlimited learners", "Onsite staff training", "99.9% uptime SLA"].map((f) => (
                   <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 text-success" />{f}</li>
                 ))}
               </ul>

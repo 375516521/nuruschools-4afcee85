@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NURU } from "@/lib/nuru";
+import { bootstrapFounder, FOUNDER_EMAIL, FOUNDER_PASSWORD } from "@/lib/bootstrap.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -87,6 +88,33 @@ function AuthPage() {
     navigate({ to: "/dashboard" });
   }
 
+  async function setupFounder() {
+    setBusy(true);
+    try {
+      const res = await bootstrapFounder();
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: FOUNDER_EMAIL,
+        password: FOUNDER_PASSWORD,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Super admin ready. Welcome.");
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Setup failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+
 
   return (
     <div className="grid min-h-screen bg-nuru-hero px-4 py-10 place-items-center">
@@ -147,6 +175,18 @@ function AuthPage() {
             <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
           </div>
           <Button variant="outline" className="w-full" onClick={google}>Continue with Google</Button>
+        </div>
+
+        <div className="card-nuru mt-4 p-4">
+          <p className="font-display text-sm font-semibold">First-time setup</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Activates the founder super admin account ({FOUNDER_EMAIL}) with the password{" "}
+            <span className="font-mono font-semibold">{FOUNDER_PASSWORD}</span>. Runs only once — change the
+            password after signing in.
+          </p>
+          <Button variant="secondary" className="mt-3 w-full" disabled={busy} onClick={setupFounder}>
+            {busy ? <Loader2 className="size-4 animate-spin" /> : null} Activate super admin & sign in
+          </Button>
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
