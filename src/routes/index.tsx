@@ -110,7 +110,7 @@ function Landing() {
 
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-20">
         <h2 className="font-display text-2xl font-bold md:text-3xl">Simple annual pricing</h2>
-        <p className="mt-2 text-sm text-muted-foreground">All tiers include 24/7 WhatsApp support under 1 hour, two onsite training sessions and free data migration.</p>
+        <p className="mt-2 text-sm text-muted-foreground">All tiers include 24/7 WhatsApp support under 1 hour and two onsite training sessions.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {PLANS.map((p, i) => (
             <article key={p.name} className={`card-nuru p-6 ${i === 1 ? "ring-2 ring-primary" : ""}`}>
