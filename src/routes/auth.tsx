@@ -87,6 +87,33 @@ function AuthPage() {
     navigate({ to: "/dashboard" });
   }
 
+  async function setupFounder() {
+    setBusy(true);
+    try {
+      const res = await bootstrapFounder();
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: FOUNDER_EMAIL,
+        password: FOUNDER_PASSWORD,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Super admin ready. Welcome.");
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Setup failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+
 
   return (
     <div className="grid min-h-screen bg-nuru-hero px-4 py-10 place-items-center">
