@@ -147,6 +147,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
   const paid = Number(summary["paid"] ?? 0);
   const results = (summary["results"] ?? []) as { subject: string; score: number | null; exam: string }[];
   const balance = billed - paid;
+  const unlocked = Boolean(summary["unlocked"]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,8 +176,21 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
         </section>
 
         <section className="card-nuru p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-display font-semibold"><BookOpen className="size-4 text-primary" /> Latest results</h2>
-          {results.length === 0 ? (
+          <h2 className="mb-3 flex items-center gap-2 font-display font-semibold">
+            {unlocked ? <BookOpen className="size-4 text-primary" /> : <Lock className="size-4 text-destructive" />} Latest results
+          </h2>
+          {!unlocked ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <p className="text-sm font-medium text-destructive">Results are locked</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Clear the outstanding balance of <span className="font-semibold">{ksh(balance)}</span> to unlock this
+                term's results, report card and ID card. Payments reflect here immediately once the school records them.
+              </p>
+              <Button className="mt-3" variant="outline" asChild>
+                <a href={NURU.whatsappLink} target="_blank" rel="noreferrer">Contact the school on WhatsApp</a>
+              </Button>
+            </div>
+          ) : results.length === 0 ? (
             <p className="text-sm text-muted-foreground">No marks published for this term yet.</p>
           ) : (
             <ul className="divide-y divide-border">
@@ -190,12 +204,14 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
           )}
         </section>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Button variant="outline" onClick={() => window.print()}><Download className="size-4" /> Print report card</Button>
-          <Button variant="outline" asChild>
-            <a href={`/verify/${s["adm_no"]}`}><Download className="size-4" /> View ID card</a>
-          </Button>
-        </div>
+        {unlocked ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button variant="outline" onClick={() => window.print()}><Download className="size-4" /> Print report card</Button>
+            <Button variant="outline" asChild>
+              <a href={`/verify/${s["adm_no"]}`}><Download className="size-4" /> View ID card</a>
+            </Button>
+          </div>
+        ) : null}
 
         <p className="pb-6 text-center text-xs text-muted-foreground">Questions? WhatsApp the school on {NURU.whatsapp}</p>
       </main>
