@@ -184,6 +184,7 @@ function FeesPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </>
       }
     >
       <div className="card-nuru overflow-x-auto">
