@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, IdCard, ClipboardList, Wallet, Settings,
-  LogOut, GraduationCap, Menu,
+  LogOut, GraduationCap, Menu, FileText,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -17,9 +17,11 @@ const NAV = [
   { to: "/students", label: "Learners", icon: Users },
   { to: "/id-cards", label: "ID Card Centre", icon: IdCard },
   { to: "/marks", label: "Exams & Marks", icon: ClipboardList },
+  { to: "/reports", label: "Report Cards", icon: FileText },
   { to: "/fees", label: "Fees & Finance", icon: Wallet },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
 
 export function useSession() {
   return useQuery({
