@@ -87,20 +87,36 @@ function FeesPage() {
       if (!studentId) throw new Error("Select a learner.");
       if (!term) throw new Error("No active term is set.");
       if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount greater than zero.");
-      const { error } = await supabase.from("fee_payments").insert({
+      const { data, error } = await supabase.from("fee_payments").insert({
         school_id: schoolId!, term_id: term.id, student_id: studentId, amount,
         method: method as "mpesa",
         reference: String(form.get("reference") ?? "").trim() || null,
-      });
+      }).select("*").single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Payment recorded — balance updated.");
+    onSuccess: (p) => {
+      toast.success("Payment recorded — receipt ready.");
+      const s = (students ?? []).find((x) => x.id === p.student_id);
+      if (s) {
+        const balance = billedFor(s.grade_id) - (paidFor(s.id) + Number(p.amount));
+        setReceipt({
+          learner: `${s.first_name} ${s.last_name}`,
+          admNo: s.adm_no,
+          amount: Number(p.amount),
+          method: p.method,
+          reference: p.reference,
+          paidAt: p.paid_at,
+          balance,
+          receiptNo: p.id.slice(0, 8).toUpperCase(),
+        });
+      }
       setOpen(false); setStudentId("");
       void qc.invalidateQueries({ queryKey: ["fee-payments"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const totalCollected = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
 
