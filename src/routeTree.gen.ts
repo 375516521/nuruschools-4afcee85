@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/fees'
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
 import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/marks'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as VerifyAdmRouteImport } from './routes/verify.$adm'
@@ -60,6 +61,11 @@ const AuthenticatedMarksRoute = AuthenticatedMarksRouteImport.update({
   path: '/marks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
   '/_authenticated/marks': typeof AuthenticatedMarksRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/verify/$adm': typeof VerifyAdmRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/fees'
     | '/id-cards'
     | '/marks'
+    | '/reports'
     | '/settings'
     | '/students'
     | '/verify/$adm'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/fees'
     | '/id-cards'
     | '/marks'
+    | '/reports'
     | '/settings'
     | '/students'
     | '/verify/$adm'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fees'
     | '/_authenticated/id-cards'
     | '/_authenticated/marks'
+    | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/students'
     | '/verify/$adm'
@@ -220,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -249,6 +268,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedIdCardsRoute: typeof AuthenticatedIdCardsRoute
   AuthenticatedMarksRoute: typeof AuthenticatedMarksRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
 }
@@ -258,6 +278,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedIdCardsRoute: AuthenticatedIdCardsRoute,
   AuthenticatedMarksRoute: AuthenticatedMarksRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
 }

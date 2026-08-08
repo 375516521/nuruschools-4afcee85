@@ -4,21 +4,12 @@ export const FOUNDER_EMAIL = "charleswambua.edu@gmail.com";
 export const FOUNDER_PASSWORD = "Nuru@2026";
 
 /**
- * One-time founder bootstrap. Only runs while the system has NO superadmin at all,
- * so it cannot be used to take over an account once setup is complete.
+ * Founder bootstrap. Idempotent and locked to the founder email only:
+ * it confirms the account, resets the default password, grants superadmin
+ * and links a school if none is set. It can never target any other user.
  */
 export const bootstrapFounder = createServerFn({ method: "POST" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-  const { data: existingRoles, error: rolesError } = await supabaseAdmin
-    .from("user_roles")
-    .select("id")
-    .eq("role", "superadmin")
-    .limit(1);
-  if (rolesError) throw new Error(rolesError.message);
-  if ((existingRoles ?? []).length > 0) {
-    return { ok: false as const, message: "Setup is already complete. Sign in with your password." };
-  }
 
   const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({ perPage: 200 });
   if (listError) throw new Error(listError.message);
@@ -43,11 +34,33 @@ export const bootstrapFounder = createServerFn({ method: "POST" }).handler(async
     userId = data.user.id;
   }
 
-  await supabaseAdmin.from("profiles").upsert({ id: userId, full_name: "Founder", email: FOUNDER_EMAIL }, { onConflict: "id" });
-  const { error: roleError } = await supabaseAdmin
-    .from("user_roles")
-    .insert({ user_id: userId, role: "superadmin" });
-  if (roleError && !roleError.message.includes("duplicate")) throw new Error(roleError.message);
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id, school_id")
+    .eq("id", userId)
+    .maybeSingle();
 
-  return { ok: true as const, message: "Founder account is ready. Signing you in…" };
+  let schoolId = profile?.school_id ?? null;
+  if (!schoolId) {
+    const { data: school } = await supabaseAdmin.from("schools").select("id").order("created_at").limit(1).maybeSingle();
+    schoolId = school?.id ?? null;
+  }
+
+  await supabaseAdmin
+    .from("profiles")
+    .upsert({ id: userId, full_name: "Founder", email: FOUNDER_EMAIL, school_id: schoolId }, { onConflict: "id" });
+
+  const { data: existingRole } = await supabaseAdmin
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "superadmin")
+    .maybeSingle();
+  if (!existingRole) {
+    const { error: roleError } = await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "superadmin" });
+    if (roleError && !roleError.message.includes("duplicate")) throw new Error(roleError.message);
+  }
+
+  return { ok: true as const, message: "Founder super admin is ready. Signing you in…" };
 });
+
