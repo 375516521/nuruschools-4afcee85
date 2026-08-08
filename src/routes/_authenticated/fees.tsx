@@ -239,6 +239,7 @@ function FeesPage() {
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Parent</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -246,6 +247,7 @@ function FeesPage() {
               const billed = billedFor(s.grade_id);
               const paid = paidFor(s.id);
               const bal = billed - paid;
+              const link = bal > 0 ? reminderLink(s, bal) : null;
               return (
                 <TableRow key={s.id}>
                   <TableCell className="font-mono text-xs">{s.adm_no}</TableCell>
@@ -256,12 +258,106 @@ function FeesPage() {
                   <TableCell>
                     <Badge variant={bal <= 0 ? "default" : "destructive"}>{bal <= 0 ? "Cleared" : "Owing"}</Badge>
                   </TableCell>
+                  <TableCell className="text-right">
+                    {link ? (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={link} target="_blank" rel="noreferrer"><MessageCircle className="size-4" /> Remind</a>
+                      </Button>
+                    ) : bal > 0 ? (
+                      <span className="text-xs text-muted-foreground">No phone</span>
+                    ) : null}
+                  </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
       </div>
+
+      <div className="card-nuru mt-5 overflow-x-auto">
+        <div className="border-b border-border p-4">
+          <p className="font-display text-sm font-semibold">Payments this term</p>
+          <p className="text-xs text-muted-foreground">Reprint any receipt at any time.</p>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Learner</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Reference</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Receipt</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {(payments ?? []).map((p) => {
+              const s = (students ?? []).find((x) => x.id === p.student_id);
+              return (
+                <TableRow key={p.id}>
+                  <TableCell className="text-xs">{new Date(p.paid_at).toLocaleDateString("en-KE")}</TableCell>
+                  <TableCell className="font-medium">{s ? `${s.first_name} ${s.last_name}` : "—"}</TableCell>
+                  <TableCell className="uppercase text-xs">{p.method}</TableCell>
+                  <TableCell className="font-mono text-xs">{p.reference ?? "—"}</TableCell>
+                  <TableCell className="text-right">{ksh(Number(p.amount))}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setReceipt({
+                          learner: s ? `${s.first_name} ${s.last_name}` : "—",
+                          admNo: s?.adm_no ?? "—",
+                          amount: Number(p.amount),
+                          method: p.method,
+                          reference: p.reference,
+                          paidAt: p.paid_at,
+                          balance: s ? billedFor(s.grade_id) - paidFor(s.id) : 0,
+                          receiptNo: p.id.slice(0, 8).toUpperCase(),
+                        })
+                      }
+                    >
+                      <Receipt className="size-4" /> Receipt
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={!!receipt} onOpenChange={(v) => !v && setReceipt(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fee receipt</DialogTitle>
+            <DialogDescription>Print or save as PDF for the parent.</DialogDescription>
+          </DialogHeader>
+          {receipt ? (
+            <div className="print-sheet rounded-lg border border-border p-5 text-sm">
+              <p className="font-display text-base font-bold">{school?.name ?? NURU.name}</p>
+              <p className="text-xs text-muted-foreground">Official fee receipt · {termLabel}</p>
+              <div className="mt-4 grid gap-1.5">
+                <Row k="Receipt No" v={receipt.receiptNo} />
+                <Row k="Date" v={new Date(receipt.paidAt).toLocaleString("en-KE")} />
+                <Row k="Learner" v={receipt.learner} />
+                <Row k="Admission No" v={receipt.admNo} />
+                <Row k="Method" v={receipt.method.toUpperCase()} />
+                <Row k="Reference" v={receipt.reference ?? "—"} />
+                <Row k="Amount paid" v={ksh(receipt.amount)} />
+                <Row k="Balance" v={ksh(receipt.balance)} />
+              </div>
+              <p className="mt-4 text-[10px] text-muted-foreground">
+                Powered by {NURU.name} · {NURU.whatsapp}
+              </p>
+            </div>
+          ) : null}
+          <DialogFooter className="no-print">
+            <Button onClick={() => window.print()}><Printer className="size-4" /> Print / Save as PDF</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
+
   );
 }
