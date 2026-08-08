@@ -178,12 +178,13 @@ function AuthPage() {
         </div>
 
         <div className="card-nuru mt-4 p-4">
-          <p className="font-display text-sm font-semibold">First-time setup</p>
+          <p className="font-display text-sm font-semibold">Super admin setup / repair</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Activates the founder super admin account ({FOUNDER_EMAIL}) with the password{" "}
-            <span className="font-mono font-semibold">{FOUNDER_PASSWORD}</span>. Runs only once — change the
-            password after signing in.
+            Confirms the founder account ({FOUNDER_EMAIL}), resets the password to{" "}
+            <span className="font-mono font-semibold">{FOUNDER_PASSWORD}</span>, grants the super admin role and
+            links a school. Safe to run any time — change the password after signing in.
           </p>
+
           <Button variant="secondary" className="mt-3 w-full" disabled={busy} onClick={setupFounder}>
             {busy ? <Loader2 className="size-4 animate-spin" /> : null} Activate super admin & sign in
           </Button>
