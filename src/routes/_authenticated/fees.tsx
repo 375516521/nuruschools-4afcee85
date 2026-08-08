@@ -361,3 +361,12 @@ function FeesPage() {
 
   );
 }
+
+function Row({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-dashed border-border py-1">
+      <span className="text-muted-foreground">{k}</span>
+      <span className="font-medium">{v}</span>
+    </div>
+  );
+}
