@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Loader2, Receipt } from "lucide-react";
+import { Plus, Loader2, Receipt, Printer, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ksh } from "@/lib/nuru";
+import { ksh, NURU } from "@/lib/nuru";
 
 export const Route = createFileRoute("/_authenticated/fees")({
   component: FeesPage,
@@ -23,19 +23,32 @@ export const Route = createFileRoute("/_authenticated/fees")({
 
 const METHODS = ["mpesa", "cash", "bank", "cheque", "waiver"] as const;
 
+type ReceiptData = {
+  learner: string;
+  admNo: string;
+  amount: number;
+  method: string;
+  reference: string | null;
+  paidAt: string;
+  balance: number;
+  receiptNo: string;
+};
+
 function FeesPage() {
   const { data: session } = useSession();
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
+  const school = session?.school as { name?: string; school_code?: string } | null;
   const { data: term } = useActiveTerm(schoolId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [studentId, setStudentId] = useState("");
   const [method, setMethod] = useState<string>("mpesa");
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["fee-students", schoolId],
     enabled: !!schoolId,
-    queryFn: async () => (await supabase.from("students").select("id, adm_no, first_name, last_name, grade_id").eq("school_id", schoolId!).eq("status", "active").order("adm_no")).data ?? [],
+    queryFn: async () => (await supabase.from("students").select("id, adm_no, first_name, last_name, grade_id, guardian_name, guardian_phone").eq("school_id", schoolId!).eq("status", "active").order("adm_no")).data ?? [],
   });
 
   const { data: structures } = useQuery({
@@ -54,6 +67,19 @@ function FeesPage() {
     (structures ?? []).filter((f) => f.grade_id === grade_id).reduce((a, f) => a + Number(f.amount), 0);
   const paidFor = (id: string) =>
     (payments ?? []).filter((p) => p.student_id === id).reduce((a, p) => a + Number(p.amount), 0);
+
+  const termLabel = term
+    ? `${(term as { academic_years?: { year?: number } }).academic_years?.year} Term ${term.term_number}`
+    : "";
+
+  function reminderLink(s: { first_name: string; last_name: string; adm_no: string; guardian_phone: string | null }, balance: number) {
+    const phone = (s.guardian_phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
+    const text = encodeURIComponent(
+      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
+    );
+    return phone ? `https://wa.me/${phone}?text=${text}` : null;
+  }
+
 
   const record = useMutation({
     mutationFn: async (form: FormData) => {
