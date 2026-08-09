@@ -11,11 +11,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ksh, NURU } from "@/lib/nuru";
+import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 
 export const Route = createFileRoute("/_authenticated/fees")({
   component: FeesPage,
@@ -26,6 +46,7 @@ const METHODS = ["mpesa", "cash", "bank", "cheque", "waiver"] as const;
 type ReceiptData = {
   learner: string;
   admNo: string;
+  grade: string;
   amount: number;
   method: string;
   reference: string | null;
@@ -37,34 +58,73 @@ type ReceiptData = {
 function FeesPage() {
   const { data: session } = useSession();
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
-  const school = session?.school as { name?: string; school_code?: string } | null;
+  const school = session?.school as SchoolInfo;
   const { data: term } = useActiveTerm(schoolId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [studentId, setStudentId] = useState("");
+  const [learnerQuery, setLearnerQuery] = useState("");
   const [method, setMethod] = useState<string>("mpesa");
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
 
   const { data: students } = useQuery({
     queryKey: ["fee-students", schoolId],
     enabled: !!schoolId,
-    queryFn: async () => (await supabase.from("students").select("id, adm_no, first_name, last_name, grade_id, guardian_name, guardian_phone").eq("school_id", schoolId!).eq("status", "active").order("adm_no")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("students")
+          .select(
+            "id, adm_no, first_name, last_name, grade_id, guardian_name, guardian_phone, grades(name), streams(name)",
+          )
+          .eq("school_id", schoolId!)
+          .eq("status", "active")
+          .order("adm_no")
+      ).data ?? [],
   });
+
+  const learnerOptions = (students ?? []).filter((s) => {
+    const t = learnerQuery.trim().toLowerCase();
+    if (!t) return true;
+    return `${s.first_name} ${s.last_name} ${s.adm_no}`.toLowerCase().includes(t);
+  });
+
+  const gradeLabel = (s: { grades?: unknown; streams?: unknown } | undefined) =>
+    [(s?.grades as { name?: string } | null)?.name, (s?.streams as { name?: string } | null)?.name]
+      .filter(Boolean)
+      .join(" ") || "—";
 
   const { data: structures } = useQuery({
     queryKey: ["fee-structures", schoolId, term?.id],
     enabled: !!schoolId && !!term,
-    queryFn: async () => (await supabase.from("fee_structures").select("*").eq("school_id", schoolId!).eq("term_id", term!.id)).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("fee_structures")
+          .select("*")
+          .eq("school_id", schoolId!)
+          .eq("term_id", term!.id)
+      ).data ?? [],
   });
 
   const { data: payments } = useQuery({
     queryKey: ["fee-payments", schoolId, term?.id],
     enabled: !!schoolId && !!term,
-    queryFn: async () => (await supabase.from("fee_payments").select("*").eq("school_id", schoolId!).eq("term_id", term!.id).order("paid_at", { ascending: false })).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("fee_payments")
+          .select("*")
+          .eq("school_id", schoolId!)
+          .eq("term_id", term!.id)
+          .order("paid_at", { ascending: false })
+      ).data ?? [],
   });
 
   const billedFor = (grade_id: string | null) =>
-    (structures ?? []).filter((f) => f.grade_id === grade_id).reduce((a, f) => a + Number(f.amount), 0);
+    (structures ?? [])
+      .filter((f) => f.grade_id === grade_id)
+      .reduce((a, f) => a + Number(f.amount), 0);
   const paidFor = (id: string) =>
     (payments ?? []).filter((p) => p.student_id === id).reduce((a, p) => a + Number(p.amount), 0);
 
@@ -72,7 +132,10 @@ function FeesPage() {
     ? `${(term as { academic_years?: { year?: number } }).academic_years?.year} Term ${term.term_number}`
     : "";
 
-  function reminderLink(s: { first_name: string; last_name: string; adm_no: string; guardian_phone: string | null }, balance: number) {
+  function reminderLink(
+    s: { first_name: string; last_name: string; adm_no: string; guardian_phone: string | null },
+    balance: number,
+  ) {
     const phone = (s.guardian_phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
     const text = encodeURIComponent(
       `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
@@ -80,18 +143,25 @@ function FeesPage() {
     return phone ? `https://wa.me/${phone}?text=${text}` : null;
   }
 
-
   const record = useMutation({
     mutationFn: async (form: FormData) => {
       const amount = Number(form.get("amount"));
       if (!studentId) throw new Error("Select a learner.");
       if (!term) throw new Error("No active term is set.");
-      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount greater than zero.");
-      const { data, error } = await supabase.from("fee_payments").insert({
-        school_id: schoolId!, term_id: term.id, student_id: studentId, amount,
-        method: method as "mpesa",
-        reference: String(form.get("reference") ?? "").trim() || null,
-      }).select("*").single();
+      if (!Number.isFinite(amount) || amount <= 0)
+        throw new Error("Enter an amount greater than zero.");
+      const { data, error } = await supabase
+        .from("fee_payments")
+        .insert({
+          school_id: schoolId!,
+          term_id: term.id,
+          student_id: studentId,
+          amount,
+          method: method as "mpesa",
+          reference: String(form.get("reference") ?? "").trim() || null,
+        })
+        .select("*")
+        .single();
       if (error) throw error;
       return data;
     },
@@ -103,6 +173,7 @@ function FeesPage() {
         setReceipt({
           learner: `${s.first_name} ${s.last_name}`,
           admNo: s.adm_no,
+          grade: gradeLabel(s),
           amount: Number(p.amount),
           method: p.method,
           reference: p.reference,
@@ -111,19 +182,26 @@ function FeesPage() {
           receiptNo: p.id.slice(0, 8).toUpperCase(),
         });
       }
-      setOpen(false); setStudentId("");
+      setOpen(false);
+      setStudentId("");
       void qc.invalidateQueries({ queryKey: ["fee-payments"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
 
   const totalCollected = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
 
   const { data: grades } = useQuery({
     queryKey: ["grades", schoolId],
     enabled: !!schoolId,
-    queryFn: async () => (await supabase.from("grades").select("id, name").eq("school_id", schoolId!).order("level_order")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("grades")
+          .select("id, name")
+          .eq("school_id", schoolId!)
+          .order("level_order")
+      ).data ?? [],
   });
 
   const [structOpen, setStructOpen] = useState(false);
@@ -136,7 +214,8 @@ function FeesPage() {
       if (!term) throw new Error("No active term is set.");
       if (!structGrade) throw new Error("Choose a grade.");
       if (!item) throw new Error("Name the fee item.");
-      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount greater than zero.");
+      if (!Number.isFinite(amount) || amount <= 0)
+        throw new Error("Enter an amount greater than zero.");
       const { error } = await supabase.from("fee_structures").insert({
         school_id: schoolId!,
         term_id: term.id,
@@ -149,7 +228,8 @@ function FeesPage() {
     },
     onSuccess: () => {
       toast.success("Fee item added to the structure.");
-      setStructOpen(false); setStructGrade("");
+      setStructOpen(false);
+      setStructGrade("");
       void qc.invalidateQueries({ queryKey: ["fee-structures"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -161,71 +241,153 @@ function FeesPage() {
       subtitle={term ? `${ksh(totalCollected)} collected this term` : "No active term"}
       actions={
         <>
-        <Dialog open={structOpen} onOpenChange={setStructOpen}>
-          <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="size-4" /> Fee structure</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add a fee item</DialogTitle>
-              <DialogDescription>Billed to every learner in the chosen grade for the active term.</DialogDescription>
-            </DialogHeader>
-            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); addStructure.mutate(new FormData(e.currentTarget)); }}>
-              <div className="space-y-1.5">
-                <Label>Grade</Label>
-                <Select value={structGrade} onValueChange={setStructGrade}>
-                  <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
-                  <SelectContent>
-                    {(grades ?? []).map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5"><Label htmlFor="item">Item</Label><Input id="item" name="item" placeholder="Tuition" required /></div>
-                <div className="space-y-1.5"><Label htmlFor="samt">Amount (KSh)</Label><Input id="samt" name="amount" type="number" min={1} required /></div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={addStructure.isPending}>
-                  {addStructure.isPending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add item
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="size-4" /> Record payment</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Record a fee payment</DialogTitle>
-              <DialogDescription>Balances and the parent portal update immediately.</DialogDescription>
-            </DialogHeader>
-            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); record.mutate(new FormData(e.currentTarget)); }}>
-              <div className="space-y-1.5">
-                <Label>Learner</Label>
-                <Select value={studentId} onValueChange={setStudentId}>
-                  <SelectTrigger><SelectValue placeholder="Select learner" /></SelectTrigger>
-                  <SelectContent>
-                    {(students ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.adm_no} — {s.first_name} {s.last_name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5"><Label htmlFor="amt">Amount (KSh)</Label><Input id="amt" name="amount" type="number" min={1} required /></div>
+          <Dialog open={structOpen} onOpenChange={setStructOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Plus className="size-4" /> Fee structure
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add a fee item</DialogTitle>
+                <DialogDescription>
+                  Billed to every learner in the chosen grade for the active term.
+                </DialogDescription>
+              </DialogHeader>
+              <form
+                className="space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  addStructure.mutate(new FormData(e.currentTarget));
+                }}
+              >
                 <div className="space-y-1.5">
-                  <Label>Method</Label>
-                  <Select value={method} onValueChange={setMethod}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+                  <Label>Grade</Label>
+                  <Select value={structGrade} onValueChange={setStructGrade}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select grade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(grades ?? []).map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div className="space-y-1.5"><Label htmlFor="ref">Reference</Label><Input id="ref" name="reference" placeholder="MPESA code or receipt no." /></div>
-              <DialogFooter>
-                <Button type="submit" disabled={record.isPending}>
-                  {record.isPending ? <Loader2 className="size-4 animate-spin" /> : <Receipt className="size-4" />} Record payment
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="item">Item</Label>
+                    <Input id="item" name="item" placeholder="Tuition" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="samt">Amount (KSh)</Label>
+                    <Input id="samt" name="amount" type="number" min={1} required />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={addStructure.isPending}>
+                    {addStructure.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Plus className="size-4" />
+                    )}{" "}
+                    Add item
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <Plus className="size-4" /> Record payment
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Record a fee payment</DialogTitle>
+                <DialogDescription>
+                  Balances and the parent portal update immediately.
+                </DialogDescription>
+              </DialogHeader>
+              <form
+                className="space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  record.mutate(new FormData(e.currentTarget));
+                }}
+              >
+                <div className="space-y-1.5">
+                  <Label>Learner</Label>
+                  <Select value={studentId} onValueChange={setStudentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select learner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-1">
+                        <Input
+                          autoFocus
+                          value={learnerQuery}
+                          onChange={(e) => setLearnerQuery(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          placeholder="Search by name or admission no."
+                          className="h-8"
+                        />
+                      </div>
+                      {learnerOptions.length === 0 ? (
+                        <p className="px-3 py-4 text-sm text-muted-foreground">
+                          No learner matches “{learnerQuery}”.
+                        </p>
+                      ) : (
+                        learnerOptions.slice(0, 60).map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.adm_no} — {s.first_name} {s.last_name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="amt">Amount (KSh)</Label>
+                    <Input id="amt" name="amount" type="number" min={1} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Method</Label>
+                    <Select value={method} onValueChange={setMethod}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {METHODS.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ref">Reference</Label>
+                  <Input id="ref" name="reference" placeholder="MPESA code or receipt no." />
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={record.isPending}>
+                    {record.isPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Receipt className="size-4" />
+                    )}{" "}
+                    Record payment
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </>
       }
     >
@@ -251,17 +413,23 @@ function FeesPage() {
               return (
                 <TableRow key={s.id}>
                   <TableCell className="font-mono text-xs">{s.adm_no}</TableCell>
-                  <TableCell className="font-medium">{s.first_name} {s.last_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {s.first_name} {s.last_name}
+                  </TableCell>
                   <TableCell className="text-right">{ksh(billed)}</TableCell>
                   <TableCell className="text-right">{ksh(paid)}</TableCell>
                   <TableCell className="text-right font-medium">{ksh(bal)}</TableCell>
                   <TableCell>
-                    <Badge variant={bal <= 0 ? "default" : "destructive"}>{bal <= 0 ? "Cleared" : "Owing"}</Badge>
+                    <Badge variant={bal <= 0 ? "default" : "destructive"}>
+                      {bal <= 0 ? "Cleared" : "Owing"}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {link ? (
                       <Button asChild size="sm" variant="outline">
-                        <a href={link} target="_blank" rel="noreferrer"><MessageCircle className="size-4" /> Remind</a>
+                        <a href={link} target="_blank" rel="noreferrer">
+                          <MessageCircle className="size-4" /> Remind
+                        </a>
                       </Button>
                     ) : bal > 0 ? (
                       <span className="text-xs text-muted-foreground">No phone</span>
@@ -295,8 +463,12 @@ function FeesPage() {
               const s = (students ?? []).find((x) => x.id === p.student_id);
               return (
                 <TableRow key={p.id}>
-                  <TableCell className="text-xs">{new Date(p.paid_at).toLocaleDateString("en-KE")}</TableCell>
-                  <TableCell className="font-medium">{s ? `${s.first_name} ${s.last_name}` : "—"}</TableCell>
+                  <TableCell className="text-xs">
+                    {new Date(p.paid_at).toLocaleDateString("en-KE")}
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {s ? `${s.first_name} ${s.last_name}` : "—"}
+                  </TableCell>
                   <TableCell className="uppercase text-xs">{p.method}</TableCell>
                   <TableCell className="font-mono text-xs">{p.reference ?? "—"}</TableCell>
                   <TableCell className="text-right">{ksh(Number(p.amount))}</TableCell>
@@ -308,6 +480,7 @@ function FeesPage() {
                         setReceipt({
                           learner: s ? `${s.first_name} ${s.last_name}` : "—",
                           admNo: s?.adm_no ?? "—",
+                          grade: gradeLabel(s),
                           amount: Number(p.amount),
                           method: p.method,
                           reference: p.reference,
@@ -335,30 +508,39 @@ function FeesPage() {
           </DialogHeader>
           {receipt ? (
             <div className="print-sheet rounded-lg border border-border p-5 text-sm">
-              <p className="font-display text-base font-bold">{school?.name ?? NURU.name}</p>
-              <p className="text-xs text-muted-foreground">Official fee receipt · {termLabel}</p>
+              <SchoolLetterhead
+                school={school}
+                documentTitle="Official fee receipt"
+                meta={termLabel}
+              />
               <div className="mt-4 grid gap-1.5">
                 <Row k="Receipt No" v={receipt.receiptNo} />
                 <Row k="Date" v={new Date(receipt.paidAt).toLocaleString("en-KE")} />
                 <Row k="Learner" v={receipt.learner} />
                 <Row k="Admission No" v={receipt.admNo} />
+                <Row k="Grade" v={receipt.grade} />
                 <Row k="Method" v={receipt.method.toUpperCase()} />
                 <Row k="Reference" v={receipt.reference ?? "—"} />
                 <Row k="Amount paid" v={ksh(receipt.amount)} />
                 <Row k="Balance" v={ksh(receipt.balance)} />
               </div>
-              <p className="mt-4 text-[10px] text-muted-foreground">
-                Powered by {NURU.name} · {NURU.whatsapp}
-              </p>
+              <div className="mt-6 flex items-end justify-between text-[11px] text-muted-foreground">
+                <span>
+                  Served by: {(session?.profile as { full_name?: string } | null)?.full_name ?? "—"}
+                </span>
+                <span className="border-t border-border pt-1">Bursar / Authorised signature</span>
+              </div>
+              <DocFooter note="Computer generated receipt" />
             </div>
           ) : null}
           <DialogFooter className="no-print">
-            <Button onClick={() => window.print()}><Printer className="size-4" /> Print / Save as PDF</Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="size-4" /> Print / Save as PDF
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </AppShell>
-
   );
 }
 
