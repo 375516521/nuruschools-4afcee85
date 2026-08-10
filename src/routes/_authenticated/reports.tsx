@@ -28,8 +28,8 @@ function SignatureBlock({
   url,
 }: {
   label: string;
-  name?: string | null;
-  url?: string | null;
+  name?: string | null | undefined;
+  url?: string | null | undefined;
 }) {
   return (
     <div className="min-w-40 text-[11px]">
