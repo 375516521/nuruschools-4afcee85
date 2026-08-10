@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Loader2, Receipt, Printer, MessageCircle } from "lucide-react";
+import { Plus, Loader2, Receipt, Printer, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +143,9 @@ function FeesPage() {
     return phone ? `https://wa.me/${phone}?text=${text}` : null;
   }
 
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkIndex, setBulkIndex] = useState(0);
+
   const record = useMutation({
     mutationFn: async (form: FormData) => {
       const amount = Number(form.get("amount"));
@@ -190,6 +193,19 @@ function FeesPage() {
   });
 
   const totalCollected = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
+
+  const owing = (students ?? [])
+    .map((s) => ({ s, balance: billedFor(s.grade_id) - paidFor(s.id) }))
+    .filter((r) => r.balance > 0);
+  const owingWithPhone = owing.filter((r) => (r.s.guardian_phone ?? "").replace(/\D/g, "").length >= 9);
+
+  function sendNextReminder() {
+    const target = owingWithPhone[bulkIndex];
+    if (!target) return;
+    const link = reminderLink(target.s, target.balance);
+    if (link) window.open(link, "_blank", "noopener");
+    setBulkIndex((i) => i + 1);
+  }
 
   const { data: grades } = useQuery({
     queryKey: ["grades", schoolId],
@@ -241,6 +257,17 @@ function FeesPage() {
       subtitle={term ? `${ksh(totalCollected)} collected this term` : "No active term"}
       actions={
         <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setBulkIndex(0);
+              setBulkOpen(true);
+            }}
+            disabled={owing.length === 0}
+          >
+            <Send className="size-4" /> Remind all ({owing.length})
+          </Button>
           <Dialog open={structOpen} onOpenChange={setStructOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="outline">
@@ -499,6 +526,42 @@ function FeesPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remind every parent with a balance</DialogTitle>
+            <DialogDescription>
+              {owingWithPhone.length} of {owing.length} owing learners have a guardian phone number.
+              Each tap opens a ready-written WhatsApp message — keep tapping to work through the list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 space-y-1.5 overflow-y-auto text-sm">
+            {owingWithPhone.map((r, i) => (
+              <div
+                key={r.s.id}
+                className={`flex justify-between gap-3 rounded-md px-2 py-1.5 ${i < bulkIndex ? "bg-secondary/60 text-muted-foreground line-through" : i === bulkIndex ? "bg-secondary" : ""}`}
+              >
+                <span className="font-medium">
+                  {r.s.first_name} {r.s.last_name}
+                </span>
+                <span>{ksh(r.balance)}</span>
+              </div>
+            ))}
+            {owingWithPhone.length === 0 ? (
+              <p className="text-muted-foreground">No owing learner has a guardian phone saved.</p>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button onClick={sendNextReminder} disabled={bulkIndex >= owingWithPhone.length}>
+              <MessageCircle className="size-4" />{" "}
+              {bulkIndex >= owingWithPhone.length
+                ? "All reminders sent"
+                : `Send reminder ${bulkIndex + 1} of ${owingWithPhone.length}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!receipt} onOpenChange={(v) => !v && setReceipt(null)}>
         <DialogContent>
