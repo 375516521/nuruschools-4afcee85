@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   GraduationCap, IdCard, Wallet, Sparkles, ShieldCheck, Users,
-  ArrowRight, Check, QrCode, BarChart3, MessageCircle, Mail,
+  ArrowRight, QrCode, BarChart3, MessageCircle, Mail,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { NURU, PLANS, ksh } from "@/lib/nuru";
+import { NURU } from "@/lib/nuru";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -105,27 +105,6 @@ function Landing() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-16 md:py-20">
-        <h2 className="font-display text-2xl font-bold md:text-3xl">Simple annual pricing</h2>
-        <p className="mt-2 text-sm text-muted-foreground">All tiers include 24/7 WhatsApp support under 1 hour and two onsite training sessions.</p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {PLANS.map((p, i) => (
-            <article key={p.name} className={`card-nuru p-6 ${i === 1 ? "ring-2 ring-primary" : ""}`}>
-              {i === 1 ? <Badge className="mb-3">Most popular</Badge> : null}
-              <h3 className="font-display text-lg font-bold">{p.name}</h3>
-              <p className="mt-1 font-display text-3xl font-extrabold text-primary">{ksh(p.price)}</p>
-              <p className="text-xs text-muted-foreground">per year</p>
-              <p className="mt-3 text-sm text-muted-foreground">{p.blurb}</p>
-              <ul className="mt-4 space-y-1.5 text-sm">
-                {["Unlimited learners", "Onsite staff training", "99.9% uptime SLA"].map((f) => (
-                  <li key={f} className="flex gap-2"><Check className="size-4 shrink-0 text-success" />{f}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
         </div>
       </section>
 

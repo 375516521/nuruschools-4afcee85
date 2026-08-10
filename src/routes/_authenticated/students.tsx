@@ -53,6 +53,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { LearnerImport } from "@/components/LearnerImport";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/students")({
   component: StudentsPage,
@@ -132,6 +134,14 @@ function StudentsPage() {
     enabled: !!editGrade,
     queryFn: async () =>
       (await supabase.from("streams").select("*").eq("grade_id", editGrade).order("name")).data ??
+      [],
+  });
+
+  const { data: allStreams } = useQuery({
+    queryKey: ["all-streams", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      (await supabase.from("streams").select("id, name, grade_id").eq("school_id", schoolId!)).data ??
       [],
   });
 
@@ -217,7 +227,8 @@ function StudentsPage() {
         .eq("id", learner.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
+      logAudit(`learner_status_${v.next}`, "students", v.learner.id);
       toast.success("Learner status updated.");
       void qc.invalidateQueries({ queryKey: ["students"] });
     },
@@ -246,6 +257,7 @@ function StudentsPage() {
       if (sErr) throw sErr;
     },
     onSuccess: () => {
+      logAudit("learner_transferred_out", "students", transferring?.id);
       toast.success("Transfer recorded — learner marked transferred out.");
       setTransferring(null);
       void qc.invalidateQueries({ queryKey: ["students"] });
@@ -259,6 +271,7 @@ function StudentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      logAudit("learner_deleted", "students", deleting?.id);
       toast.success("Learner permanently deleted.");
       setDeleting(null);
       void qc.invalidateQueries({ queryKey: ["students"] });
@@ -285,6 +298,8 @@ function StudentsPage() {
       title="Learners"
       subtitle={`${filtered.length} shown`}
       actions={
+        <>
+        <LearnerImport schoolId={schoolId} grades={grades ?? []} streams={allStreams ?? []} />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
@@ -356,6 +371,22 @@ function StudentsPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
+                  <Label htmlFor="gender">Gender</Label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    defaultValue=""
+                  >
+                    <option value="">Not stated</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                  </select>
+                </div>
+                <div />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="gn">Guardian name</Label>
                   <Input id="gn" name="guardian_name" />
                 </div>
@@ -373,6 +404,7 @@ function StudentsPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </>
       }
     >
       <div className="mb-4 flex flex-wrap gap-3">
@@ -581,6 +613,22 @@ function StudentsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="egender">Gender</Label>
+                  <select
+                    id="egender"
+                    name="gender"
+                    defaultValue={editing.gender ?? ""}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Not stated</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                  </select>
+                </div>
+                <div />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">

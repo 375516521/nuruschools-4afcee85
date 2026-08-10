@@ -444,6 +444,44 @@ export type Database = {
           },
         ]
       }
+      hoi_access: {
+        Row: {
+          created_at: string
+          grade_ids: string[]
+          id: string
+          modules: string[]
+          school_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grade_ids?: string[]
+          id?: string
+          modules?: string[]
+          school_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grade_ids?: string[]
+          id?: string
+          modules?: string[]
+          school_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoi_access_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marks: {
         Row: {
           comment: string | null
@@ -515,6 +553,8 @@ export type Database = {
           must_change_password: boolean
           phone: string | null
           school_id: string | null
+          signature_url: string | null
+          title: string | null
         }
         Insert: {
           created_at?: string
@@ -524,6 +564,8 @@ export type Database = {
           must_change_password?: boolean
           phone?: string | null
           school_id?: string | null
+          signature_url?: string | null
+          title?: string | null
         }
         Update: {
           created_at?: string
@@ -533,6 +575,8 @@ export type Database = {
           must_change_password?: boolean
           phone?: string | null
           school_id?: string | null
+          signature_url?: string | null
+          title?: string | null
         }
         Relationships: [
           {
@@ -996,6 +1040,10 @@ export type Database = {
       in_my_school: { Args: { _school: string }; Returns: boolean }
       is_school_admin: { Args: { _school: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      log_audit: {
+        Args: { _action: string; _entity?: string; _entity_id?: string }
+        Returns: undefined
+      }
       parent_lookup: {
         Args: {
           _adm_no?: string

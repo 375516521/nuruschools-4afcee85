@@ -9,6 +9,13 @@ import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { NURU } from "@/lib/nuru";
 
@@ -81,6 +88,45 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         </Link>
       ))}
     </nav>
+  );
+}
+
+/** Super admin school switcher — lets the founder work inside any school they created. */
+function SchoolSwitcher() {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isSuper = (session?.roles ?? []).includes("superadmin");
+  const profileId = (session?.profile as { id?: string } | null)?.id ?? null;
+  const current = (session?.profile as { school_id?: string } | null)?.school_id ?? "";
+
+  const { data: schools } = useQuery({
+    queryKey: ["all-schools"],
+    enabled: isSuper,
+    queryFn: async () =>
+      (await supabase.from("schools").select("id, name, school_code").order("name")).data ?? [],
+  });
+
+  if (!isSuper || !profileId) return null;
+
+  async function switchTo(id: string) {
+    const { error } = await supabase.from("profiles").update({ school_id: id }).eq("id", profileId!);
+    if (error) return;
+    await queryClient.invalidateQueries();
+  }
+
+  return (
+    <Select value={current} onValueChange={(v) => void switchTo(v)}>
+      <SelectTrigger className="no-print h-9 w-[170px] text-xs sm:w-[220px]">
+        <SelectValue placeholder="Switch school" />
+      </SelectTrigger>
+      <SelectContent>
+        {(schools ?? []).map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name} ({s.school_code})
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -159,7 +205,10 @@ export function AppShell({ title, subtitle, actions, children }: {
             <h1 className="truncate font-display text-lg font-bold text-foreground">{title}</h1>
             {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            <SchoolSwitcher />
+            {actions}
+          </div>
         </header>
 
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>

@@ -192,6 +192,68 @@
 }
 
 @media print {
-  .no-print { display: none !important; }
-  .print-sheet { box-shadow: none !important; border: none !important; }
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .no-print,
+  header,
+  aside,
+  footer,
+  nav,
+  [data-slot="dialog-close"],
+  [data-slot="dialog-overlay"] {
+    display: none !important;
+  }
+
+  /* Only document sheets are inked — everything else is hidden so PDFs never look like screenshots. */
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 0 6mm 0 !important;
+    color: #000 !important;
+  }
+
+  [data-slot="dialog-content"] {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .break-after-page {
+    break-after: page;
+  }
+
+  .break-after-page:last-child {
+    break-after: auto;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
 }
+
