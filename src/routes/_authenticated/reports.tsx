@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Printer, FileText, Trophy } from "lucide-react";
+import { Printer, FileText, Trophy, Download } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, useSession } from "@/components/AppShell";
@@ -15,11 +15,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { scoreToLevel } from "@/lib/nuru";
+import { classTeacherComment, headTeacherComment } from "@/lib/report-comments";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   component: ReportsPage,
 });
+
+function SignatureBlock({
+  label,
+  name,
+  url,
+}: {
+  label: string;
+  name?: string | null;
+  url?: string | null;
+}) {
+  return (
+    <div className="min-w-40 text-[11px]">
+      {url ? (
+        <img src={url} alt={`${label} signature`} className="mb-1 h-10 object-contain" />
+      ) : (
+        <div className="mb-1 h-10" />
+      )}
+      <p className="border-t border-border pt-1 font-semibold">{label}</p>
+      {name ? <p className="text-muted-foreground">{name}</p> : null}
+    </div>
+  );
+}
 
 type MarkRow = {
   student_id: string;
@@ -88,7 +111,7 @@ function ReportsPage() {
       (
         await supabase
           .from("students")
-          .select("id, adm_no, student_id, first_name, last_name, streams(name)")
+          .select("id, adm_no, student_id, first_name, last_name, gender, streams(name)")
           .eq("grade_id", gradeId)
           .eq("status", "active")
           .order("adm_no")
@@ -107,6 +130,25 @@ function ReportsPage() {
           .eq("grade_id", gradeId)
           .order("created_at")
       ).data ?? [],
+  });
+
+  const { data: signatories } = useQuery({
+    queryKey: ["signatories", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () => {
+      const [profileRes, rolesRes] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, signature_url").eq("school_id", schoolId!),
+        supabase.from("user_roles").select("user_id, role").eq("school_id", schoolId!),
+      ]);
+      const hoiIds = new Set(
+        (rolesRes.data ?? []).filter((r) => r.role === "hoi").map((r) => r.user_id),
+      );
+      const profiles = profileRes.data ?? [];
+      return {
+        hoi: profiles.find((p) => hoiIds.has(p.id) && p.signature_url) ?? null,
+        me: profiles.find((p) => p.id === session?.user?.id) ?? null,
+      };
+    },
   });
 
   const examIds = (exams ?? []).map((e) => e.id);
@@ -143,10 +185,32 @@ function ReportsPage() {
     .filter((r) => r.count > 0)
     .sort((a, b) => (b.mean ?? 0) - (a.mean ?? 0));
 
-  const rankOf = (sid: string) => {
-    const i = merit.findIndex((m) => m.s.id === sid);
-    return i < 0 ? null : `${i + 1} of ${merit.length}`;
-  };
+  function exportMerit() {
+    const header = ["Position", "Admission", "Student ID", "Learner", "Stream", "Total", "Mean", "Level"];
+    const lines = merit.map((r, i) =>
+      [
+        i + 1,
+        r.s.adm_no,
+        r.s.student_id ?? "",
+        `${r.s.first_name} ${r.s.last_name}`,
+        (r.s as { streams?: { name?: string } }).streams?.name ?? "",
+        r.total.toFixed(0),
+        r.mean === null ? "" : r.mean.toFixed(1),
+        scoreToLevel(r.mean),
+      ]
+        .map((c) => `"${String(c).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const blob = new Blob([[header.join(","), ...lines].join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `merit-list-${gradeLabel ?? "grade"}-${yearLabel ?? ""}-term-${termLabel ?? ""}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function cardFor(sid: string) {
     const rows = (marks ?? []).filter((m) => m.student_id === sid);
@@ -187,6 +251,15 @@ function ReportsPage() {
             className="no-print"
           >
             <Trophy className="size-4" /> Merit list
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={exportMerit}
+            disabled={view !== "merit" || merit.length === 0}
+            className="no-print"
+          >
+            <Download className="size-4" /> Export merit list
           </Button>
           <Button size="sm" onClick={() => window.print()} disabled={!ready || shown.length === 0}>
             <Printer className="size-4" /> Print / Save as PDF
@@ -324,9 +397,17 @@ function ReportsPage() {
               )}
             </tbody>
           </table>
-          <div className="mt-6 flex justify-between text-[11px] text-muted-foreground">
-            <span className="border-t border-border pt-1">Class teacher</span>
-            <span className="border-t border-border pt-1">Head of Institution</span>
+          <div className="mt-8 flex items-end justify-between gap-6">
+            <SignatureBlock
+              label="Class teacher"
+              name={signatories?.me?.full_name}
+              url={signatories?.me?.signature_url}
+            />
+            <SignatureBlock
+              label="Head of Institution"
+              name={signatories?.hoi?.full_name}
+              url={signatories?.hoi?.signature_url}
+            />
           </div>
           <DocFooter note="Merit list" />
         </div>
@@ -357,8 +438,14 @@ function ReportsPage() {
                     <span className="font-mono font-medium">{s.student_id ?? "—"}</span>
                   </p>
                   <p>
-                    <span className="text-muted-foreground">Position:</span>{" "}
-                    <span className="font-semibold">{rankOf(s.id) ?? "—"}</span>
+                    <span className="text-muted-foreground">Gender:</span>{" "}
+                    <span className="font-medium">
+                      {(s as { gender?: string | null }).gender === "M"
+                        ? "Male"
+                        : (s as { gender?: string | null }).gender === "F"
+                          ? "Female"
+                          : "—"}
+                    </span>
                   </p>
                 </div>
 
@@ -369,6 +456,9 @@ function ReportsPage() {
                       {(exams ?? []).map((e) => (
                         <th key={e.id} className="py-2 text-right">
                           {e.name}
+                          <span className="block text-[10px] font-normal normal-case">
+                            out of {e.max_score}
+                          </span>
                         </th>
                       ))}
                       <th className="py-2 text-right">Level</th>
@@ -409,15 +499,34 @@ function ReportsPage() {
                   </tbody>
                 </table>
 
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-xs">
+                <div className="mt-4 border-t border-border pt-3 text-xs">
                   <p>
                     Mean score:{" "}
                     <span className="font-semibold">{mean === null ? "-" : mean.toFixed(1)}</span> ·
                     Overall level: <span className="font-semibold">{scoreToLevel(mean)}</span>
                   </p>
-                  <p className="text-muted-foreground">
-                    Class teacher ______________ · Head of Institution ______________
-                  </p>
+                  <div className="mt-3 space-y-2">
+                    <p>
+                      <span className="font-semibold">Class teacher&apos;s remark:</span>{" "}
+                      {classTeacherComment(mean)}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Head of Institution&apos;s remark:</span>{" "}
+                      {headTeacherComment(mean)}
+                    </p>
+                  </div>
+                  <div className="mt-5 flex items-end justify-between gap-6">
+                    <SignatureBlock
+                      label="Class teacher"
+                      name={signatories?.me?.full_name}
+                      url={signatories?.me?.signature_url}
+                    />
+                    <SignatureBlock
+                      label="Head of Institution"
+                      name={signatories?.hoi?.full_name}
+                      url={signatories?.hoi?.signature_url}
+                    />
+                  </div>
                 </div>
                 <DocFooter note="Official school report card" />
               </div>
