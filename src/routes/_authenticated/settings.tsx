@@ -11,6 +11,10 @@ import {
   UserPlus,
   BookOpen,
   Trash2,
+  PenLine,
+  Users,
+  Layers,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,6 +33,9 @@ import {
 } from "@/components/ui/select";
 import { NURU } from "@/lib/nuru";
 import { createHoiAccount } from "@/lib/school-admin.functions";
+import { createTeacherAccount } from "@/lib/staff-admin.functions";
+import { fileToDataUrl } from "@/lib/image-upload";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -79,6 +86,15 @@ function SettingsPage() {
   const [hoiSchool, setHoiSchool] = useState("");
   const [subjectGrade, setSubjectGrade] = useState("all");
   const callCreateHoi = useServerFn(createHoiAccount);
+  const callCreateTeacher = useServerFn(createTeacherAccount);
+  const [logoData, setLogoData] = useState<string | null>(null);
+  const [sigData, setSigData] = useState<string | null>(null);
+  const [streamGrade, setStreamGrade] = useState("");
+  const [teacherGrade, setTeacherGrade] = useState("");
+  const [teacherSubjects, setTeacherSubjects] = useState<string[]>([]);
+  const [accessUser, setAccessUser] = useState("");
+  const [accessGrades, setAccessGrades] = useState<string[]>([]);
+  const [accessModules, setAccessModules] = useState<string[]>([]);
 
   const { data: schools } = useQuery({
     queryKey: ["all-schools"],
@@ -273,6 +289,7 @@ function SettingsPage() {
         academic_year_id: term.academic_years.id,
         grade_id: examGrade,
         name,
+        max_score: Math.max(1, Number(form.get("max_score") ?? 100) || 100),
       });
       if (error) throw error;
     },
@@ -329,7 +346,7 @@ function SettingsPage() {
           county: String(form.get("s_county") ?? "").trim() || null,
           phone: String(form.get("s_phone") ?? "").trim() || null,
           email: String(form.get("s_email") ?? "").trim() || null,
-          logo_url: String(form.get("s_logo") ?? "").trim() || null,
+          logo_url: logoData ?? school?.logo_url ?? null,
           uli_code: String(form.get("s_uli") ?? "").trim() || null,
         })
         .eq("id", schoolId);
@@ -579,11 +596,36 @@ function SettingsPage() {
                   placeholder="School email"
                 />
               </div>
-              <Input
-                name="s_logo"
-                defaultValue={school?.logo_url ?? ""}
-                placeholder="Logo image URL (https://…)"
-              />
+              <div className="space-y-1.5 rounded-lg border border-dashed border-border p-3">
+                <Label htmlFor="logo_file">School logo (upload an image)</Label>
+                <div className="flex items-center gap-3">
+                  {logoData ?? school?.logo_url ? (
+                    <img
+                      src={(logoData ?? school?.logo_url)!}
+                      alt="School logo preview"
+                      className="size-14 rounded-lg object-contain"
+                    />
+                  ) : null}
+                  <input
+                    id="logo_file"
+                    type="file"
+                    accept="image/*"
+                    className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      try {
+                        setLogoData(await fileToDataUrl(f, 320));
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  The logo prints on report cards, merit lists, ID cards and receipts.
+                </p>
+              </div>
               <Button type="submit" className="w-full" disabled={saveSchool.isPending}>
                 {saveSchool.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -747,6 +789,14 @@ function SettingsPage() {
             </Select>
             <div className="flex gap-2">
               <Input name="name" placeholder="e.g. Opener Exam" />
+              <Input
+                name="max_score"
+                type="number"
+                min={1}
+                defaultValue={100}
+                className="w-28"
+                aria-label="Score out of"
+              />
               <Button type="submit" disabled={createExam.isPending || !term}>
                 {createExam.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
