@@ -404,6 +404,7 @@ function StudentsPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </>
       }
     >
       <div className="mb-4 flex flex-wrap gap-3">
