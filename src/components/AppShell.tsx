@@ -84,6 +84,45 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Super admin school switcher — lets the founder work inside any school they created. */
+function SchoolSwitcher() {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const isSuper = (session?.roles ?? []).includes("superadmin");
+  const profileId = (session?.profile as { id?: string } | null)?.id ?? null;
+  const current = (session?.profile as { school_id?: string } | null)?.school_id ?? "";
+
+  const { data: schools } = useQuery({
+    queryKey: ["all-schools"],
+    enabled: isSuper,
+    queryFn: async () =>
+      (await supabase.from("schools").select("id, name, school_code").order("name")).data ?? [],
+  });
+
+  if (!isSuper || !profileId) return null;
+
+  async function switchTo(id: string) {
+    const { error } = await supabase.from("profiles").update({ school_id: id }).eq("id", profileId!);
+    if (error) return;
+    await queryClient.invalidateQueries();
+  }
+
+  return (
+    <Select value={current} onValueChange={(v) => void switchTo(v)}>
+      <SelectTrigger className="no-print h-9 w-[170px] text-xs sm:w-[220px]">
+        <SelectValue placeholder="Switch school" />
+      </SelectTrigger>
+      <SelectContent>
+        {(schools ?? []).map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {s.name} ({s.school_code})
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function AppShell({ title, subtitle, actions, children }: {
   title: string;
   subtitle?: ReactNode;
