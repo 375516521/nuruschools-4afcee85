@@ -205,7 +205,10 @@ export function AppShell({ title, subtitle, actions, children }: {
             <h1 className="truncate font-display text-lg font-bold text-foreground">{title}</h1>
             {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2">
+            <SchoolSwitcher />
+            {actions}
+          </div>
         </header>
 
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
