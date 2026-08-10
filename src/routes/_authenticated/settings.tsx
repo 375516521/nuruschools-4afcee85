@@ -37,6 +37,8 @@ import { createTeacherAccount } from "@/lib/staff-admin.functions";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const MODULES = ["students", "marks", "reports", "fees", "id-cards", "settings"] as const;
+
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
@@ -405,6 +407,140 @@ function SettingsPage() {
       toast.success("Learning area removed.");
       void qc.invalidateQueries({ queryKey: ["subjects"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---- My signature -------------------------------------------------------
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-signature", profile?.id],
+    enabled: !!profile?.id,
+    queryFn: async () =>
+      (await supabase.from("profiles").select("signature_url").eq("id", profile!.id!).maybeSingle())
+        .data,
+  });
+
+  const saveSignature = useMutation({
+    mutationFn: async () => {
+      if (!sigData) throw new Error("Choose a signature image first.");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ signature_url: sigData })
+        .eq("id", profile!.id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Signature saved — it now prints on report cards and merit lists.");
+      void qc.invalidateQueries({ queryKey: ["my-signature"] });
+      void qc.invalidateQueries({ queryKey: ["signatories"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---- Streams ------------------------------------------------------------
+  const { data: streams } = useQuery({
+    queryKey: ["settings-streams", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("streams")
+          .select("id, name, grade_id, grades(name)")
+          .eq("school_id", schoolId!)
+          .order("name")
+      ).data ?? [],
+  });
+
+  const addStream = useMutation({
+    mutationFn: async (form: FormData) => {
+      const name = String(form.get("stream_name") ?? "").trim();
+      if (!streamGrade) throw new Error("Choose the grade this stream belongs to.");
+      if (!name) throw new Error("Enter the stream name, e.g. North or Blue.");
+      const { error } = await supabase
+        .from("streams")
+        .insert({ school_id: schoolId!, grade_id: streamGrade, name });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Stream added.");
+      void qc.invalidateQueries({ queryKey: ["settings-streams"] });
+      void qc.invalidateQueries({ queryKey: ["all-streams"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeStream = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("streams").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Stream removed.");
+      void qc.invalidateQueries({ queryKey: ["settings-streams"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---- Teacher accounts ---------------------------------------------------
+  const createTeacher = useMutation({
+    mutationFn: async (form: FormData) => {
+      const target = isSuper ? hoiSchool || schoolId : schoolId;
+      if (!target) throw new Error("Choose the school this teacher belongs to.");
+      return callCreateTeacher({
+        data: {
+          school_id: target,
+          full_name: String(form.get("t_name") ?? "").trim(),
+          email: String(form.get("t_email") ?? "").trim(),
+          password: String(form.get("t_password") ?? ""),
+          phone: String(form.get("t_phone") ?? "").trim() || null,
+          tsc_number: String(form.get("t_tsc") ?? "").trim() || null,
+          subject_ids: teacherSubjects,
+          grade_id: teacherGrade || null,
+        },
+      });
+    },
+    onSuccess: (r) => {
+      toast.success(`Teacher login ready for ${r.email}.`);
+      setTeacherSubjects([]);
+      void qc.invalidateQueries({ queryKey: ["school-staff"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---- HOI access (super admin) -------------------------------------------
+  const { data: hoiPeople } = useQuery({
+    queryKey: ["hoi-people", hoiSchool || schoolId],
+    enabled: isSuper && !!(hoiSchool || schoolId),
+    queryFn: async () => {
+      const target = (hoiSchool || schoolId)!;
+      const roles = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "hoi")
+        .eq("school_id", target);
+      const ids = (roles.data ?? []).map((r) => r.user_id);
+      if (ids.length === 0) return [];
+      return (
+        (await supabase.from("profiles").select("id, full_name, email").in("id", ids)).data ?? []
+      );
+    },
+  });
+
+  const saveAccess = useMutation({
+    mutationFn: async () => {
+      const target = (hoiSchool || schoolId)!;
+      if (!accessUser) throw new Error("Choose the Head of Institution first.");
+      const { error } = await supabase.from("hoi_access").upsert(
+        {
+          user_id: accessUser,
+          school_id: target,
+          grade_ids: accessGrades,
+          modules: accessModules,
+        },
+        { onConflict: "user_id" },
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Access rules saved for this Head of Institution."),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -808,6 +944,251 @@ function SettingsPage() {
             </div>
           </form>
         </section>
+
+        {schoolId && isAdmin ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <Layers className="size-4 text-primary" /> Streams per class
+            </h2>
+            <form
+              className="mt-3 space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                addStream.mutate(new FormData(e.currentTarget));
+                e.currentTarget.reset();
+              }}
+            >
+              <Select value={streamGrade} onValueChange={setStreamGrade}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(grades ?? []).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Input name="stream_name" placeholder="Stream name e.g. North, Blue, East" />
+                <Button type="submit" disabled={addStream.isPending}>
+                  {addStream.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Plus className="size-4" />
+                  )}{" "}
+                  Add
+                </Button>
+              </div>
+            </form>
+            <div className="mt-4 max-h-56 space-y-1.5 overflow-y-auto border-t border-border pt-3 text-sm">
+              {(streams ?? []).length === 0 ? (
+                <p className="text-muted-foreground">No streams yet.</p>
+              ) : (
+                (streams ?? []).map((st) => (
+                  <div key={st.id} className="flex items-center justify-between gap-3">
+                    <span className="font-medium">
+                      {(st.grades as { name?: string } | null)?.name} · {st.name}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeStream.mutate(st.id)}
+                      aria-label={`Remove ${st.name}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        ) : null}
+
+        {profile?.id ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <PenLine className="size-4 text-primary" /> My digital signature
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Upload a clear photo or scan of your signature. It prints on report cards and merit
+              lists next to your name.
+            </p>
+            <div className="mt-3 flex items-center gap-4">
+              {sigData ?? myProfile?.signature_url ? (
+                <img
+                  src={(sigData ?? myProfile?.signature_url)!}
+                  alt="Signature preview"
+                  className="h-12 object-contain"
+                />
+              ) : null}
+              <input
+                type="file"
+                accept="image/*"
+                className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    setSigData(await fileToDataUrl(f, 420));
+                  } catch (err) {
+                    toast.error((err as Error).message);
+                  }
+                }}
+              />
+            </div>
+            <Button
+              className="mt-3 w-full"
+              onClick={() => saveSignature.mutate()}
+              disabled={saveSignature.isPending || !sigData}
+            >
+              {saveSignature.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Save
+              signature
+            </Button>
+          </section>
+        ) : null}
+
+        {schoolId && isAdmin ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <Users className="size-4 text-primary" /> Teacher accounts
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create a teacher login and link them to the learning areas they teach.
+            </p>
+            <form
+              className="mt-3 space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                createTeacher.mutate(new FormData(e.currentTarget));
+              }}
+            >
+              <Input name="t_name" placeholder="Teacher full name" required />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input name="t_email" type="email" placeholder="Email (login)" required />
+                <Input name="t_phone" placeholder="Phone" />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input name="t_tsc" placeholder="TSC number" />
+                <Input
+                  name="t_password"
+                  minLength={8}
+                  placeholder="Temporary password"
+                  required
+                />
+              </div>
+              <Select value={teacherGrade} onValueChange={setTeacherGrade}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Grade they teach" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(grades ?? []).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Learning areas taught
+                </p>
+                {(subjects ?? []).map((sub) => (
+                  <label key={sub.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={teacherSubjects.includes(sub.id)}
+                      onCheckedChange={(v) =>
+                        setTeacherSubjects((prev) =>
+                          v ? [...prev, sub.id] : prev.filter((x) => x !== sub.id),
+                        )
+                      }
+                    />
+                    {sub.name}
+                  </label>
+                ))}
+                {(subjects ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Add learning areas first.</p>
+                ) : null}
+              </div>
+              <Button type="submit" className="w-full" disabled={createTeacher.isPending}>
+                {createTeacher.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <UserPlus className="size-4" />
+                )}{" "}
+                Create teacher login
+              </Button>
+            </form>
+          </section>
+        ) : null}
+
+        {isSuper ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <ShieldCheck className="size-4 text-primary" /> Head of Institution access
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Choose which grades and modules a Head of Institution may work with.
+            </p>
+            <div className="mt-3 space-y-2">
+              <Select value={accessUser} onValueChange={setAccessUser}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Head of Institution" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(hoiPeople ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.full_name || p.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Grades</p>
+                  {(grades ?? []).map((g) => (
+                    <label key={g.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={accessGrades.includes(g.id)}
+                        onCheckedChange={(v) =>
+                          setAccessGrades((prev) =>
+                            v ? [...prev, g.id] : prev.filter((x) => x !== g.id),
+                          )
+                        }
+                      />
+                      {g.name}
+                    </label>
+                  ))}
+                </div>
+                <div className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Modules</p>
+                  {MODULES.map((m) => (
+                    <label key={m} className="flex items-center gap-2 text-sm capitalize">
+                      <Checkbox
+                        checked={accessModules.includes(m)}
+                        onCheckedChange={(v) =>
+                          setAccessModules((prev) =>
+                            v ? [...prev, m] : prev.filter((x) => x !== m),
+                          )
+                        }
+                      />
+                      {m.replace("-", " ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => saveAccess.mutate()}
+                disabled={saveAccess.isPending || !accessUser}
+              >
+                {saveAccess.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Save
+                access rules
+              </Button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="card-nuru p-5 lg:col-span-2">
           <h2 className="font-display font-semibold">Support</h2>
