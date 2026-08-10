@@ -91,22 +91,24 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
       if (rErr) throw new Error(rErr.message);
     }
 
-    const { data: teacher, error: tErr } = await supabaseAdmin
+    const teacherRow = {
+      school_id: data.school_id,
+      user_id: userId,
+      full_name: data.full_name,
+      email,
+      phone: data.phone ?? null,
+      tsc_number: data.tsc_number ?? null,
+      is_active: true,
+    };
+    const { data: found } = await supabaseAdmin
       .from("teachers")
-      .upsert(
-        {
-          school_id: data.school_id,
-          user_id: userId,
-          full_name: data.full_name,
-          email,
-          phone: data.phone ?? null,
-          tsc_number: data.tsc_number ?? null,
-          is_active: true,
-        },
-        { onConflict: "user_id" },
-      )
       .select("id")
-      .single();
+      .eq("user_id", userId)
+      .maybeSingle();
+    const query = found
+      ? supabaseAdmin.from("teachers").update(teacherRow).eq("id", found.id)
+      : supabaseAdmin.from("teachers").insert(teacherRow);
+    const { data: teacher, error: tErr } = await query.select("id").single();
     if (tErr) throw new Error(tErr.message);
 
     if (data.subject_ids.length && data.grade_id) {
