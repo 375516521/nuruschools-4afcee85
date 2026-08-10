@@ -616,6 +616,22 @@ function StudentsPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
+                  <Label htmlFor="egender">Gender</Label>
+                  <select
+                    id="egender"
+                    name="gender"
+                    defaultValue={editing.gender ?? ""}
+                    className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">Not stated</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                  </select>
+                </div>
+                <div />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="egn">Guardian name</Label>
                   <Input id="egn" name="guardian_name" defaultValue={editing.guardian_name ?? ""} />
                 </div>
