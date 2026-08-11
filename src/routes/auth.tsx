@@ -39,6 +39,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [forgot, setForgot] = useState(false);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +52,29 @@ function AuthPage() {
     }
     navigate({ to: "/dashboard" });
   }
+
+  /** Emails a reset link and logs the request so the super admin is notified. */
+  async function sendReset(e: React.FormEvent) {
+    e.preventDefault();
+    const target = email.trim().toLowerCase();
+    if (!target) {
+      toast.error("Enter the email address on your account.");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    await supabase.rpc("record_password_reset", { _email: target, _stage: "requested" });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Check your email for the reset link.");
+    setForgot(false);
+  }
+
 
   async function signUp(e: React.FormEvent) {
     e.preventDefault();
@@ -106,20 +130,43 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={signIn} className="space-y-4 pt-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="e1">Email</Label>
-                  <Input id="e1" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="head@school.ac.ke" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="p1">Password</Label>
-                  <Input id="p1" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : null} Sign in
-                </Button>
-              </form>
+              {forgot ? (
+                <form onSubmit={sendReset} className="space-y-4 pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    We&apos;ll email you a secure link to set a new password.
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fe">Email on your account</Label>
+                    <Input id="fe" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="head@school.ac.ke" />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    {busy ? <Loader2 className="size-4 animate-spin" /> : null} Email me a reset link
+                  </Button>
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => setForgot(false)}>
+                    Back to sign in
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={signIn} className="space-y-4 pt-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="e1">Email</Label>
+                    <Input id="e1" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="head@school.ac.ke" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="p1">Password</Label>
+                    <Input id="p1" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={busy}>
+                    {busy ? <Loader2 className="size-4 animate-spin" /> : null} Sign in
+                  </Button>
+                  <button type="button" onClick={() => setForgot(true)}
+                    className="w-full text-center text-xs font-medium text-primary underline-offset-2 hover:underline">
+                    Forgot your password?
+                  </button>
+                </form>
+              )}
             </TabsContent>
+
 
             <TabsContent value="signup">
               <form onSubmit={signUp} className="space-y-4 pt-4">

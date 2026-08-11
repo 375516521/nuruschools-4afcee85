@@ -544,39 +544,89 @@ export type Database = {
           },
         ]
       }
+      password_reset_events: {
+        Row: {
+          acknowledged: boolean
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: string | null
+          school_id: string | null
+          stage: string
+          user_id: string | null
+        }
+        Insert: {
+          acknowledged?: boolean
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          school_id?: string | null
+          stage?: string
+          user_id?: string | null
+        }
+        Update: {
+          acknowledged?: boolean
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          school_id?: string | null
+          stage?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_reset_events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           email: string | null
           full_name: string
           id: string
+          last_password_reset_at: string | null
           must_change_password: boolean
           phone: string | null
           school_id: string | null
           signature_url: string | null
           title: string | null
+          username: string | null
         }
         Insert: {
           created_at?: string
           email?: string | null
           full_name?: string
           id: string
+          last_password_reset_at?: string | null
           must_change_password?: boolean
           phone?: string | null
           school_id?: string | null
           signature_url?: string | null
           title?: string | null
+          username?: string | null
         }
         Update: {
           created_at?: string
           email?: string | null
           full_name?: string
           id?: string
+          last_password_reset_at?: string | null
           must_change_password?: boolean
           phone?: string | null
           school_id?: string | null
           signature_url?: string | null
           title?: string | null
+          username?: string | null
         }
         Relationships: [
           {
@@ -593,7 +643,11 @@ export type Database = {
           county: string | null
           created_at: string
           email: string | null
+          hoi_email: string | null
+          hoi_name: string | null
+          hoi_phone: string | null
           id: string
+          is_active: boolean
           logo_url: string | null
           modules: Json
           name: string
@@ -606,7 +660,11 @@ export type Database = {
           county?: string | null
           created_at?: string
           email?: string | null
+          hoi_email?: string | null
+          hoi_name?: string | null
+          hoi_phone?: string | null
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           modules?: Json
           name: string
@@ -619,7 +677,11 @@ export type Database = {
           county?: string | null
           created_at?: string
           email?: string | null
+          hoi_email?: string | null
+          hoi_name?: string | null
+          hoi_phone?: string | null
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           modules?: Json
           name?: string
@@ -900,27 +962,36 @@ export type Database = {
       terms: {
         Row: {
           academic_year_id: string
+          closing_date: string | null
           end_date: string | null
           id: string
           is_active: boolean
+          next_term_opening_date: string | null
+          opening_date: string | null
           school_id: string
           start_date: string | null
           term_number: number
         }
         Insert: {
           academic_year_id: string
+          closing_date?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
+          next_term_opening_date?: string | null
+          opening_date?: string | null
           school_id: string
           start_date?: string | null
           term_number: number
         }
         Update: {
           academic_year_id?: string
+          closing_date?: string | null
           end_date?: string | null
           id?: string
           is_active?: boolean
+          next_term_opening_date?: string | null
+          opening_date?: string | null
           school_id?: string
           start_date?: string | null
           term_number?: number
@@ -1037,6 +1108,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      hoi_can_access_grade: { Args: { _grade_id: string }; Returns: boolean }
       in_my_school: { Args: { _school: string }; Returns: boolean }
       is_school_admin: { Args: { _school: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
@@ -1062,6 +1134,11 @@ export type Database = {
         }[]
       }
       parent_student_summary: { Args: { _student_id: string }; Returns: Json }
+      record_password_reset: {
+        Args: { _email: string; _stage?: string }
+        Returns: undefined
+      }
+      username_available: { Args: { _username: string }; Returns: boolean }
       verify_student_id: {
         Args: { _adm_no: string }
         Returns: {

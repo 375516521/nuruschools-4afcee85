@@ -8,6 +8,14 @@ const hoiSchema = z.object({
   email: z.string().trim().email().max(120),
   password: z.string().min(8).max(72),
   phone: z.string().trim().max(20).optional().nullable(),
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(40)
+    .regex(/^[a-z0-9._-]+$/i, "Letters, numbers, dot, dash and underscore only")
+    .optional()
+    .nullable(),
 });
 
 /**
@@ -26,6 +34,15 @@ export const createHoiAccount = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
+    const username = (data.username ?? email.split("@")[0] ?? "").toLowerCase();
+
+    const { data: clash } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email")
+      .ilike("username", username)
+      .maybeSingle();
+    if (clash && clash.email?.toLowerCase() !== email)
+      throw new Error("That username is already used in another school.");
 
     const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
       perPage: 1000,
@@ -59,6 +76,7 @@ export const createHoiAccount = createServerFn({ method: "POST" })
         email,
         phone: data.phone ?? null,
         school_id: data.school_id,
+        username,
         must_change_password: true,
       },
       { onConflict: "id" },
@@ -83,5 +101,19 @@ export const createHoiAccount = createServerFn({ method: "POST" })
       if (rErr) throw new Error(rErr.message);
     }
 
-    return { ok: true as const, email };
+    // The HOI is the public contact for their school.
+    await supabaseAdmin
+      .from("schools")
+      .update({ hoi_name: data.full_name, hoi_phone: data.phone ?? null, hoi_email: email })
+      .eq("id", data.school_id);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      school_id: data.school_id,
+      user_id: context.userId,
+      action: existing ? "hoi_account_updated" : "hoi_account_created",
+      entity: "profiles",
+      entity_id: userId,
+    });
+
+    return { ok: true as const, email, username };
   });

@@ -6,16 +6,24 @@ const teacherSchema = z.object({
   school_id: z.string().uuid(),
   full_name: z.string().trim().min(2).max(80),
   email: z.string().trim().email().max(120),
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(40)
+    .regex(/^[a-z0-9._-]+$/i, "Letters, numbers, dot, dash and underscore only")
+    .optional()
+    .nullable(),
   password: z.string().min(8).max(72),
   phone: z.string().trim().max(20).optional().nullable(),
   tsc_number: z.string().trim().max(30).optional().nullable(),
-  subject_ids: z.array(z.string().uuid()).max(30).default([]),
-  grade_id: z.string().uuid().optional().nullable(),
+  subject_ids: z.array(z.string().uuid()).max(60).default([]),
+  grade_ids: z.array(z.string().uuid()).max(20).default([]),
 });
 
 /**
- * Creates a teacher login for one school and links them to the learning areas they teach.
- * Callable by a super admin, or by the HOI of that same school.
+ * Creates a teacher login for one school and links them to every grade + learning area they teach.
+ * Callable by a super admin, or by the HOI of that same school (limited to the grades they own).
  */
 export const createTeacherAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -35,10 +43,33 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
         .maybeSingle();
       if (profile?.school_id !== data.school_id)
         throw new Error("You can only create teachers for your own school.");
+
+      // The HOI may only assign grades they have been granted access to.
+      const { data: access } = await context.supabase
+        .from("hoi_access")
+        .select("grade_ids")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      const allowed = (access?.grade_ids ?? []) as string[];
+      if (allowed.length) {
+        const blocked = data.grade_ids.filter((g) => !allowed.includes(g));
+        if (blocked.length)
+          throw new Error("You can only assign teachers to the grades you have been given access to.");
+      }
     }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
+    const username = (data.username ?? email.split("@")[0] ?? "").toLowerCase();
+
+    const { data: clash } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email")
+      .ilike("username", username)
+      .maybeSingle();
+    if (clash && clash.email?.toLowerCase() !== email)
+      throw new Error("That username is already used in another school.");
 
     const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
       perPage: 1000,
@@ -72,6 +103,7 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
         email,
         phone: data.phone ?? null,
         school_id: data.school_id,
+        username,
         must_change_password: true,
       },
       { onConflict: "id" },
@@ -111,18 +143,20 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
     const { data: teacher, error: tErr } = await query.select("id").single();
     if (tErr) throw new Error(tErr.message);
 
-    if (data.subject_ids.length && data.grade_id) {
+    if (data.subject_ids.length && data.grade_ids.length) {
       await supabaseAdmin.from("teacher_subjects").delete().eq("teacher_id", teacher.id);
-      const { error: tsErr } = await supabaseAdmin.from("teacher_subjects").insert(
+      const rows = data.grade_ids.flatMap((gid) =>
         data.subject_ids.map((sid) => ({
           school_id: data.school_id,
           teacher_id: teacher.id,
           subject_id: sid,
-          grade_id: data.grade_id!,
+          grade_id: gid,
         })),
       );
+      const { error: tsErr } = await supabaseAdmin.from("teacher_subjects").insert(rows);
       if (tsErr) throw new Error(tsErr.message);
     }
+
 
     await supabaseAdmin.from("audit_logs").insert({
       school_id: data.school_id,
@@ -132,5 +166,5 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
       entity_id: teacher.id,
     });
 
-    return { ok: true as const, email };
+    return { ok: true as const, email, username };
   });
