@@ -74,9 +74,12 @@ export function useActiveTerm(schoolId?: string | null) {
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: session } = useSession();
+  const isSuper = (session?.roles ?? []).includes("superadmin");
+  const items = isSuper ? [...NAV, ...SUPER_NAV] : NAV;
   return (
     <nav className="flex flex-col gap-1">
-      {NAV.map(({ to, label, icon: Icon }) => (
+      {items.map(({ to, label, icon: Icon }) => (
         <Link
           key={to}
           to={to}
@@ -95,6 +98,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     </nav>
   );
 }
+
 
 /** Super admin school switcher — lets the founder work inside any school they created. */
 function SchoolSwitcher() {
