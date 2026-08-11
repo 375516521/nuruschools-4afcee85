@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRouteImport } from './routes/parent'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/fees'
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
@@ -20,6 +21,7 @@ import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as VerifyAdmRouteImport } from './routes/verify.$adm'
 
 const IndexRoute = IndexRouteImport.update({
@@ -39,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
 const ParentRoute = ParentRouteImport.update({
   id: '/parent',
   path: '/parent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -76,6 +83,11 @@ const AuthenticatedStudentsRoute = AuthenticatedStudentsRouteImport.update({
   path: '/students',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const VerifyAdmRoute = VerifyAdmRouteImport.update({
   id: '/verify/$adm',
   path: '/verify/$adm',
@@ -86,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
@@ -93,12 +106,14 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
@@ -106,6 +121,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
 export interface FileRoutesById {
@@ -114,6 +130,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
@@ -121,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/parent'
+    | '/reset-password'
     | '/dashboard'
     | '/fees'
     | '/id-cards'
@@ -136,12 +155,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/students'
+    | '/users'
     | '/verify/$adm'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/parent'
+    | '/reset-password'
     | '/dashboard'
     | '/fees'
     | '/id-cards'
@@ -149,6 +170,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/students'
+    | '/users'
     | '/verify/$adm'
   id:
     | '__root__'
@@ -156,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/parent'
+    | '/reset-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/fees'
     | '/_authenticated/id-cards'
@@ -163,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/students'
+    | '/_authenticated/users'
     | '/verify/$adm'
   fileRoutesById: FileRoutesById
 }
@@ -171,6 +195,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ParentRoute: typeof ParentRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   VerifyAdmRoute: typeof VerifyAdmRoute
 }
 
@@ -202,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/parent'
       fullPath: '/parent'
       preLoaderRoute: typeof ParentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -253,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/verify/$adm': {
       id: '/verify/$adm'
       path: '/verify/$adm'
@@ -271,6 +310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -281,6 +321,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -291,18 +332,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ParentRoute: ParentRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   VerifyAdmRoute: VerifyAdmRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
