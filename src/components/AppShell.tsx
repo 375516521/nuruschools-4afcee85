@@ -2,7 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, IdCard, ClipboardList, Wallet, Settings,
-  LogOut, GraduationCap, Menu, FileText,
+  LogOut, GraduationCap, Menu, FileText, ShieldCheck,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -28,6 +28,11 @@ const NAV = [
   { to: "/fees", label: "Fees & Finance", icon: Wallet },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
+const SUPER_NAV = [
+  { to: "/users", label: "Users & Schools", icon: ShieldCheck },
+] as const;
+
 
 
 export function useSession() {
