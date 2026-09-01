@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -71,6 +71,140 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          category: string | null
+          condition: string
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          purchased_on: string | null
+          quantity: number
+          school_id: string
+          serial_number: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          category?: string | null
+          condition?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          purchased_on?: string | null
+          quantity?: number
+          school_id: string
+          serial_number?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          category?: string | null
+          condition?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          purchased_on?: string | null
+          quantity?: number
+          school_id?: string
+          serial_number?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          grade_id: string | null
+          id: string
+          marked_by: string | null
+          remark: string | null
+          school_id: string
+          status: string
+          stream_id: string | null
+          student_id: string
+          term_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          grade_id?: string | null
+          id?: string
+          marked_by?: string | null
+          remark?: string | null
+          school_id: string
+          status?: string
+          stream_id?: string | null
+          student_id: string
+          term_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          grade_id?: string | null
+          id?: string
+          marked_by?: string | null
+          remark?: string | null
+          school_id?: string
+          status?: string
+          stream_id?: string | null
+          student_id?: string
+          term_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
             referencedColumns: ["id"]
           },
         ]
@@ -174,6 +308,7 @@ export type Database = {
           created_at: string
           grade_id: string
           id: string
+          is_active: boolean
           max_score: number
           name: string
           school_id: string
@@ -185,6 +320,7 @@ export type Database = {
           created_at?: string
           grade_id: string
           id?: string
+          is_active?: boolean
           max_score?: number
           name: string
           school_id: string
@@ -196,6 +332,7 @@ export type Database = {
           created_at?: string
           grade_id?: string
           id?: string
+          is_active?: boolean
           max_score?: number
           name?: string
           school_id?: string
@@ -478,6 +615,114 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_books: {
+        Row: {
+          author: string | null
+          available_copies: number
+          category: string | null
+          created_at: string
+          id: string
+          isbn: string | null
+          school_id: string
+          shelf: string | null
+          title: string
+          total_copies: number
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          available_copies?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          isbn?: string | null
+          school_id: string
+          shelf?: string | null
+          title: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          available_copies?: number
+          category?: string | null
+          created_at?: string
+          id?: string
+          isbn?: string | null
+          school_id?: string
+          shelf?: string | null
+          title?: string
+          total_copies?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_books_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      library_loans: {
+        Row: {
+          book_id: string
+          borrowed_on: string
+          created_at: string
+          due_on: string | null
+          id: string
+          returned_on: string | null
+          school_id: string
+          student_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          borrowed_on?: string
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          returned_on?: string | null
+          school_id: string
+          student_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          borrowed_on?: string
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          returned_on?: string | null
+          school_id?: string
+          student_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "library_loans_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "library_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_loans_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "library_loans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]

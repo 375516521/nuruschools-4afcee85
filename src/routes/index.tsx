@@ -11,10 +11,10 @@ import { NURU } from "@/lib/nuru";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Nuru Technologies — CBC School Management System for Kenya" },
-      { name: "description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
-      { property: "og:title", content: "Nuru Technologies — CBC School Management System for Kenya" },
-      { property: "og:description", content: "Nuru Technologies runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { title: "Fanisi Digital Solutions — CBC School Management System for Kenya" },
+      { name: "description", content: "Fanisi Digital Solutions runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { property: "og:title", content: "Fanisi Digital Solutions — CBC School Management System for Kenya" },
+      { property: "og:description", content: "Fanisi Digital Solutions runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,8 +40,8 @@ function Landing() {
             <GraduationCap className="size-5" />
           </div>
           <div className="mr-auto leading-tight">
-            <p className="font-display text-sm font-bold">NURU</p>
-            <p className="text-[11px] text-muted-foreground">Technologies</p>
+            <p className="font-display text-sm font-bold">FANISI</p>
+            <p className="text-[11px] text-muted-foreground">Digital Solutions</p>
           </div>
           <Button asChild variant="ghost" size="sm"><Link to="/parent">Parents</Link></Button>
           <Button asChild size="sm"><Link to="/auth">Staff login</Link></Button>
