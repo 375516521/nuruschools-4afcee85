@@ -41,7 +41,7 @@ function Landing() {
           </div>
           <div className="mr-auto leading-tight">
             <p className="font-display text-sm font-bold">FANISI</p>
-            <p className="text-[11px] text-muted-foreground">Technologies</p>
+            <p className="text-[11px] text-muted-foreground">Digital Solutions</p>
           </div>
           <Button asChild variant="ghost" size="sm"><Link to="/parent">Parents</Link></Button>
           <Button asChild size="sm"><Link to="/auth">Staff login</Link></Button>

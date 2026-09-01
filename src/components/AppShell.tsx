@@ -164,8 +164,8 @@ export function AppShell({ title, subtitle, actions, children }: {
         <GraduationCap className="size-5" />
       </div>
       <div className="leading-tight">
-        <p className="font-display text-sm font-bold text-sidebar-foreground">NURU</p>
-        <p className="text-[11px] text-sidebar-foreground/60">Technologies</p>
+        <p className="font-display text-sm font-bold text-sidebar-foreground">FANISI</p>
+        <p className="text-[11px] text-sidebar-foreground/60">Digital Solutions</p>
       </div>
     </div>
   );
