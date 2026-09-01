@@ -14,13 +14,13 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Set a New Password — Nuru Technologies" },
+      { title: "Set a New Password — Fanisi Digital Solutions" },
       {
         name: "description",
         content:
-          "Choose a new password for your Nuru Technologies school account after requesting a reset link.",
+          "Choose a new password for your Fanisi Digital Solutions school account after requesting a reset link.",
       },
-      { property: "og:title", content: "Set a New Password — Nuru Technologies" },
+      { property: "og:title", content: "Set a New Password — Fanisi Digital Solutions" },
       { property: "og:description", content: "Choose a new password for your school account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -86,7 +86,7 @@ function ResetPasswordPage() {
           <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </div>
-          <span className="font-display text-lg font-bold">NURU Technologies</span>
+          <span className="font-display text-lg font-bold">FANISI DIGITAL SOLUTIONS</span>
         </Link>
 
         <div className="card-nuru p-6">

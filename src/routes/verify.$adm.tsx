@@ -11,10 +11,10 @@ import { NURU } from "@/lib/nuru";
 export const Route = createFileRoute("/verify/$adm")({
   head: ({ params }) => ({
     meta: [
-      { title: `Verify learner ${params.adm} — Nuru Technologies` },
-      { name: "description", content: `Public verification of student ID card and admission number ${params.adm} issued through the Nuru Technologies school management system.` },
+      { title: `Verify learner ${params.adm} — Fanisi Digital Solutions` },
+      { name: "description", content: `Public verification of student ID card and admission number ${params.adm} issued through the Fanisi Digital Solutions school management system.` },
       { property: "og:title", content: `Verify learner ${params.adm}` },
-      { property: "og:description", content: "Scan-to-verify student identity card issued by a Nuru Technologies school." },
+      { property: "og:description", content: "Scan-to-verify student identity card issued by a Fanisi Digital Solutions school." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -41,7 +41,7 @@ function VerifyPage() {
           <div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </div>
-          <span className="font-display font-bold">NURU Technologies</span>
+          <span className="font-display font-bold">FANISI DIGITAL SOLUTIONS</span>
         </Link>
 
         <div className="card-nuru overflow-hidden">

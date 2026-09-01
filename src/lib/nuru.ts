@@ -1,5 +1,5 @@
 export const NURU = {
-  name: "Nuru Technologies",
+  name: "Fanisi Digital Solutions",
   tagline: "The complete CBC school management system for Kenyan schools",
   whatsapp: "+254745939344",
   whatsappLink: "https://wa.me/254745939344",
