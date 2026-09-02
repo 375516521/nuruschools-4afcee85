@@ -14,8 +14,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedExamsRouteImport } from './routes/_authenticated/exams'
 import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/fees'
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -50,6 +52,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAssetsRoute = AuthenticatedAssetsRouteImport.update({
+  id: '/assets',
+  path: '/assets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAttendanceRoute = AuthenticatedAttendanceRouteImport.update({
   id: '/attendance',
   path: '/attendance',
@@ -58,6 +65,11 @@ const AuthenticatedAttendanceRoute = AuthenticatedAttendanceRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedExamsRoute = AuthenticatedExamsRouteImport.update({
+  id: '/exams',
+  path: '/exams',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFeesRoute = AuthenticatedFeesRouteImport.update({
@@ -111,8 +123,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/assets': typeof AuthenticatedAssetsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/exams': typeof AuthenticatedExamsRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -128,8 +142,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/assets': typeof AuthenticatedAssetsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/exams': typeof AuthenticatedExamsRoute
   '/fees': typeof AuthenticatedFeesRoute
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/library': typeof AuthenticatedLibraryRoute
@@ -147,8 +163,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/assets': typeof AuthenticatedAssetsRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/exams': typeof AuthenticatedExamsRoute
   '/_authenticated/fees': typeof AuthenticatedFeesRoute
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
@@ -166,8 +184,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/reset-password'
+    | '/assets'
     | '/attendance'
     | '/dashboard'
+    | '/exams'
     | '/fees'
     | '/id-cards'
     | '/library'
@@ -183,8 +203,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/reset-password'
+    | '/assets'
     | '/attendance'
     | '/dashboard'
+    | '/exams'
     | '/fees'
     | '/id-cards'
     | '/library'
@@ -201,8 +223,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/parent'
     | '/reset-password'
+    | '/_authenticated/assets'
     | '/_authenticated/attendance'
     | '/_authenticated/dashboard'
+    | '/_authenticated/exams'
     | '/_authenticated/fees'
     | '/_authenticated/id-cards'
     | '/_authenticated/library'
@@ -260,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/assets': {
+      id: '/_authenticated/assets'
+      path: '/assets'
+      fullPath: '/assets'
+      preLoaderRoute: typeof AuthenticatedAssetsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/attendance': {
       id: '/_authenticated/attendance'
       path: '/attendance'
@@ -272,6 +303,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/exams': {
+      id: '/_authenticated/exams'
+      path: '/exams'
+      fullPath: '/exams'
+      preLoaderRoute: typeof AuthenticatedExamsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fees': {
@@ -341,8 +379,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAssetsRoute: typeof AuthenticatedAssetsRoute
   AuthenticatedAttendanceRoute: typeof AuthenticatedAttendanceRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedExamsRoute: typeof AuthenticatedExamsRoute
   AuthenticatedFeesRoute: typeof AuthenticatedFeesRoute
   AuthenticatedIdCardsRoute: typeof AuthenticatedIdCardsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
@@ -354,8 +394,10 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAssetsRoute: AuthenticatedAssetsRoute,
   AuthenticatedAttendanceRoute: AuthenticatedAttendanceRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedExamsRoute: AuthenticatedExamsRoute,
   AuthenticatedFeesRoute: AuthenticatedFeesRoute,
   AuthenticatedIdCardsRoute: AuthenticatedIdCardsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
