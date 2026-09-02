@@ -77,48 +77,67 @@ export type Database = {
       }
       assets: {
         Row: {
+          asset_tag: string | null
           category: string | null
           condition: string
           created_at: string
+          grade_id: string | null
           id: string
           location: string | null
           name: string
+          photo_url: string | null
           purchased_on: string | null
           quantity: number
           school_id: string
           serial_number: string | null
+          stream_id: string | null
           updated_at: string
           value: number
         }
         Insert: {
+          asset_tag?: string | null
           category?: string | null
           condition?: string
           created_at?: string
+          grade_id?: string | null
           id?: string
           location?: string | null
           name: string
+          photo_url?: string | null
           purchased_on?: string | null
           quantity?: number
           school_id: string
           serial_number?: string | null
+          stream_id?: string | null
           updated_at?: string
           value?: number
         }
         Update: {
+          asset_tag?: string | null
           category?: string | null
           condition?: string
           created_at?: string
+          grade_id?: string | null
           id?: string
           location?: string | null
           name?: string
+          photo_url?: string | null
           purchased_on?: string | null
           quantity?: number
           school_id?: string
           serial_number?: string | null
+          stream_id?: string | null
           updated_at?: string
           value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "assets_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assets_school_id_fkey"
             columns: ["school_id"]
@@ -126,15 +145,24 @@ export type Database = {
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "assets_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
         ]
       }
       attendance: {
         Row: {
+          afternoon_status: string
           created_at: string
           date: string
           grade_id: string | null
           id: string
           marked_by: string | null
+          morning_status: string
           remark: string | null
           school_id: string
           status: string
@@ -144,11 +172,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          afternoon_status?: string
           created_at?: string
           date?: string
           grade_id?: string | null
           id?: string
           marked_by?: string | null
+          morning_status?: string
           remark?: string | null
           school_id: string
           status?: string
@@ -158,11 +188,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          afternoon_status?: string
           created_at?: string
           date?: string
           grade_id?: string | null
           id?: string
           marked_by?: string | null
+          morning_status?: string
           remark?: string | null
           school_id?: string
           status?: string
