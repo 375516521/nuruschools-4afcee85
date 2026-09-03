@@ -920,6 +920,7 @@ export type Database = {
           county: string | null
           created_at: string
           email: string | null
+          grading_scale: Json | null
           hoi_email: string | null
           hoi_name: string | null
           hoi_phone: string | null
@@ -937,6 +938,7 @@ export type Database = {
           county?: string | null
           created_at?: string
           email?: string | null
+          grading_scale?: Json | null
           hoi_email?: string | null
           hoi_name?: string | null
           hoi_phone?: string | null
@@ -954,6 +956,7 @@ export type Database = {
           county?: string | null
           created_at?: string
           email?: string | null
+          grading_scale?: Json | null
           hoi_email?: string | null
           hoi_name?: string | null
           hoi_phone?: string | null
