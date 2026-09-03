@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { canUseRoute, useHoiAccess } from "@/lib/access";
 import { NURU } from "@/lib/nuru";
 
 const NAV = [
