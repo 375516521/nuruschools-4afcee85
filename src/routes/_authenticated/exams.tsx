@@ -54,6 +54,8 @@ function ExamsPage() {
   const { data: session } = useSession();
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
   const school = session?.school as SchoolInfo;
+  const isSuper = (session?.roles ?? []).includes("superadmin");
+  const { data: access } = useHoiAccess(session?.user?.id ?? null);
   const { data: term } = useActiveTerm(schoolId);
   const qc = useQueryClient();
 
@@ -62,13 +64,7 @@ function ExamsPage() {
   const [newName, setNewName] = useState("");
   const [newMax, setNewMax] = useState("100");
 
-  const { data: grades } = useQuery({
-    queryKey: ["grades", schoolId],
-    enabled: !!schoolId,
-    queryFn: async () =>
-      (await supabase.from("grades").select("id, name").eq("school_id", schoolId!).order("level_order"))
-        .data ?? [],
-  });
+  const { data: grades } = useAllowedGrades(schoolId, isSuper, access ?? null);
 
   const { data: exams } = useQuery({
     queryKey: ["exams", schoolId, term?.id],
