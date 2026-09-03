@@ -95,6 +95,127 @@ function ExamsPage() {
       ).data ?? []) as MarkRow[],
   });
 
+  const currentExam = gradeExams.find((e) => e.id === examId) ?? null;
+
+  // ---- Grading scale (Head of Institution configurable) --------------------
+  const savedScale = useMemo(
+    () => parseScale((school as { grading_scale?: unknown } | null)?.grading_scale),
+    [school],
+  );
+  const [scaleDraft, setScaleDraft] = useState<GradeBand[]>(savedScale);
+  const [scaleOpen, setScaleOpen] = useState(false);
+  useEffect(() => setScaleDraft(savedScale), [savedScale]);
+
+  const saveScale = useMutation({
+    mutationFn: async (bands: GradeBand[] | null) => {
+      const { error } = await supabase
+        .from("schools")
+        .update({ grading_scale: bands } as never)
+        .eq("id", schoolId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      logAudit("grading_scale_updated", "schools", schoolId ?? "");
+      toast.success("Grading scale saved.");
+      void qc.invalidateQueries({ queryKey: ["session-profile"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // ---- Marks grid ----------------------------------------------------------
+  const { data: gridStudents } = useQuery({
+    queryKey: ["grid-students", gradeId],
+    enabled: !!gradeId && !!currentExam,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("students")
+          .select("id, adm_no, first_name, last_name, streams(name)")
+          .eq("grade_id", gradeId)
+          .eq("status", "active")
+          .order("adm_no")
+      ).data ?? [],
+  });
+
+  const { data: gridSubjects } = useQuery({
+    queryKey: ["grid-subjects", schoolId, gradeId],
+    enabled: !!schoolId && !!gradeId,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("subjects")
+          .select("id, name")
+          .eq("school_id", schoolId!)
+          .or(`grade_id.eq.${gradeId},grade_id.is.null`)
+          .order("name")
+      ).data ?? [],
+  });
+
+  const { data: examMarks } = useQuery({
+    queryKey: ["exam-marks", currentExam?.id],
+    enabled: !!currentExam,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("marks")
+          .select("student_id, subject_id, score, comment")
+          .eq("exam_id", currentExam!.id)
+      ).data ?? [],
+  });
+
+  const [scores, setScores] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const s: Record<string, string> = {};
+    const c: Record<string, string> = {};
+    for (const m of examMarks ?? []) {
+      s[`${m.student_id}:${m.subject_id}`] = m.score === null ? "" : String(m.score);
+      if (m.comment) c[m.student_id] = m.comment;
+    }
+    setScores(s);
+    setComments(c);
+  }, [examMarks]);
+
+  const saveMarks = useMutation({
+    mutationFn: async () => {
+      if (!currentExam) throw new Error("Choose an exam first.");
+      const rows: Array<Record<string, unknown>> = [];
+      for (const st of gridStudents ?? []) {
+        for (const sub of gridSubjects ?? []) {
+          const raw = scores[`${st.id}:${sub.id}`];
+          if (raw === undefined || raw === "") continue;
+          const score = Number(raw);
+          if (Number.isNaN(score)) continue;
+          rows.push({
+            school_id: schoolId!,
+            exam_id: currentExam.id,
+            student_id: st.id,
+            subject_id: sub.id,
+            score,
+            performance_level: bandFor(score, currentExam.max_score, scaleDraft)?.code ?? null,
+            comment: comments[st.id] ?? null,
+          });
+        }
+      }
+      if (!rows.length) throw new Error("Enter at least one score.");
+      const { error } = await supabase
+        .from("marks")
+        .upsert(rows as never, { onConflict: "exam_id,student_id,subject_id" });
+      if (error) throw error;
+      return rows.length;
+    },
+    onSuccess: (n) => {
+      logAudit("marks_saved", "marks", currentExam?.id ?? "");
+      toast.success(`${n} marks saved.`);
+      void qc.invalidateQueries({ queryKey: ["exam-marks"] });
+      void qc.invalidateQueries({ queryKey: ["exam-analytics"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   const create = useMutation({
     mutationFn: async () => {
       if (!gradeId) throw new Error("Choose a grade first.");
