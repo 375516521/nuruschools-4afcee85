@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { canUseRoute, useHoiAccess } from "@/lib/access";
 import { NURU } from "@/lib/nuru";
 
 const NAV = [
@@ -82,7 +83,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: session } = useSession();
   const isSuper = (session?.roles ?? []).includes("superadmin");
-  const items = isSuper ? [...NAV, ...SUPER_NAV] : NAV;
+  const { data: access } = useHoiAccess(session?.user?.id ?? null);
+  const items = (isSuper ? [...NAV, ...SUPER_NAV] : NAV).filter((i) =>
+    canUseRoute(i.to, isSuper, access ?? null),
+  );
   return (
     <nav className="flex flex-col gap-1">
       {items.map(({ to, label, icon: Icon }) => (
