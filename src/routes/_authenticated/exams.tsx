@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { BarChart3, Loader2, Plus, Printer, Power, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BarChart3, Loader2, Plus, Printer, Power, Save, Sliders, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 import { scoreToLevel } from "@/lib/nuru";
+import { DEFAULT_SCALE, bandFor, parseScale, type GradeBand } from "@/lib/grading";
+import { useAllowedGrades, useHoiAccess } from "@/lib/access";
 import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/exams")({
