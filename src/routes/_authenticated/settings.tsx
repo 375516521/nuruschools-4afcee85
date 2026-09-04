@@ -37,7 +37,8 @@ import { createTeacherAccount } from "@/lib/staff-admin.functions";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const MODULES = ["students", "marks", "reports", "fees", "id-cards", "settings"] as const;
+/** Module keys must match ROUTE_MODULE in src/lib/access.ts. */
+const MODULES = ["admissions", "academics", "fees", "library", "assets"] as const;
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -92,7 +93,7 @@ function SettingsPage() {
   const [logoData, setLogoData] = useState<string | null>(null);
   const [sigData, setSigData] = useState<string | null>(null);
   const [streamGrade, setStreamGrade] = useState("");
-  const [teacherGrade, setTeacherGrade] = useState("");
+  const [teacherGrades, setTeacherGrades] = useState<string[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<string[]>([]);
   const [accessUser, setAccessUser] = useState("");
   const [accessGrades, setAccessGrades] = useState<string[]>([]);
