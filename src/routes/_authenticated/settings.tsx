@@ -1088,18 +1088,24 @@ function SettingsPage() {
                   required
                 />
               </div>
-              <Select value={teacherGrade} onValueChange={setTeacherGrade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Grade they teach" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(grades ?? []).map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+                <p className="text-xs tracking-wide uppercase text-muted-foreground">
+                  Grades taught (required)
+                </p>
+                {(grades ?? []).map((g) => (
+                  <label key={g.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={teacherGrades.includes(g.id)}
+                      onCheckedChange={(v) =>
+                        setTeacherGrades((prev) =>
+                          v ? [...prev, g.id] : prev.filter((x) => x !== g.id),
+                        )
+                      }
+                    />
+                    {g.name}
+                  </label>
+                ))}
+              </div>
               <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Learning areas taught
