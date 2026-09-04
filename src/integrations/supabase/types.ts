@@ -409,6 +409,64 @@ export type Database = {
           },
         ]
       }
+      fee_discounts: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          reason: string | null
+          school_id: string
+          student_id: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          school_id: string
+          student_id: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          school_id?: string
+          student_id?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_discounts_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_discounts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_discounts_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fee_payments: {
         Row: {
           amount: number
@@ -817,6 +875,95 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mpesa_transactions: {
+        Row: {
+          account_reference: string | null
+          amount: number
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          initiated_by: string | null
+          merchant_request_id: string | null
+          mpesa_receipt: string | null
+          payment_id: string | null
+          phone: string
+          result_code: string | null
+          result_desc: string | null
+          school_id: string
+          status: string
+          student_id: string | null
+          term_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_reference?: string | null
+          amount: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          initiated_by?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          payment_id?: string | null
+          phone: string
+          result_code?: string | null
+          result_desc?: string | null
+          school_id: string
+          status?: string
+          student_id?: string | null
+          term_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_reference?: string | null
+          amount?: number
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          initiated_by?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          payment_id?: string | null
+          phone?: string
+          result_code?: string | null
+          result_desc?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string | null
+          term_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mpesa_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "fee_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_transactions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_transactions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_transactions_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
             referencedColumns: ["id"]
           },
         ]
