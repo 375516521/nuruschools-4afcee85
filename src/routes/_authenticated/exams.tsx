@@ -395,6 +395,190 @@ function ExamsPage() {
         </div>
       ) : null}
 
+      {gradeId ? (
+        <div className="card-nuru mb-5 p-4 no-print">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold">Marks grid</p>
+              <p className="text-xs text-muted-foreground">
+                {currentExam
+                  ? `${currentExam.name} · out of ${currentExam.max_score} · levels follow the school grading scale`
+                  : "Pick a single exam above to enter scores."}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setScaleOpen((v) => !v)}>
+                <Sliders className="size-4" /> Grading scale
+              </Button>
+              <Button
+                size="sm"
+                disabled={!currentExam || saveMarks.isPending}
+                onClick={() => saveMarks.mutate()}
+              >
+                {saveMarks.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Save className="size-4" />
+                )}{" "}
+                Save marks
+              </Button>
+            </div>
+          </div>
+
+          {scaleOpen ? (
+            <div className="mb-4 rounded-lg border border-border p-3">
+              <p className="mb-2 text-xs tracking-wide uppercase text-muted-foreground">
+                Grading scale — percentage bands used for every printable
+              </p>
+              <div className="grid gap-2">
+                {scaleDraft.map((b, i) => (
+                  <div key={i} className="grid grid-cols-[80px_1fr_70px_70px_auto] items-center gap-2">
+                    <Input
+                      value={b.code}
+                      aria-label="Band code"
+                      onChange={(e) =>
+                        setScaleDraft((p) =>
+                          p.map((x, j) => (j === i ? { ...x, code: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <Input
+                      value={b.label}
+                      aria-label="Band label"
+                      onChange={(e) =>
+                        setScaleDraft((p) =>
+                          p.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <Input
+                      type="number"
+                      value={b.min}
+                      aria-label="Minimum percentage"
+                      onChange={(e) =>
+                        setScaleDraft((p) =>
+                          p.map((x, j) => (j === i ? { ...x, min: Number(e.target.value) } : x)),
+                        )
+                      }
+                    />
+                    <Input
+                      type="number"
+                      value={b.max}
+                      aria-label="Maximum percentage"
+                      onChange={(e) =>
+                        setScaleDraft((p) =>
+                          p.map((x, j) => (j === i ? { ...x, max: Number(e.target.value) } : x)),
+                        )
+                      }
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Remove ${b.code}`}
+                      onClick={() => setScaleDraft((p) => p.filter((_, j) => j !== i))}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setScaleDraft((p) => [...p, { code: "", label: "", min: 0, max: 100 }])
+                  }
+                >
+                  <Plus className="size-4" /> Add band
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setScaleDraft(DEFAULT_SCALE)}>
+                  Reset to CBC default
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={saveScale.isPending}
+                  onClick={() => saveScale.mutate(scaleDraft)}
+                >
+                  {saveScale.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Save
+                  scale
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {currentExam ? (
+            <div className="overflow-x-auto">
+              <table className="doc-table w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left">Learner</th>
+                    {(gridSubjects ?? []).map((sub) => (
+                      <th key={sub.id} className="min-w-24 text-left">
+                        {sub.name}
+                      </th>
+                    ))}
+                    <th className="min-w-56 text-left">Teacher comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(gridStudents ?? []).map((st) => (
+                    <tr key={st.id}>
+                      <td className="align-top">
+                        <p className="font-medium">
+                          {st.first_name} {st.last_name}
+                        </p>
+                        <p className="font-mono text-[11px] text-muted-foreground">{st.adm_no}</p>
+                      </td>
+                      {(gridSubjects ?? []).map((sub) => {
+                        const key = `${st.id}:${sub.id}`;
+                        const raw = scores[key] ?? "";
+                        const band =
+                          raw === "" ? null : bandFor(Number(raw), currentExam.max_score, scaleDraft);
+                        return (
+                          <td key={sub.id} className="align-top">
+                            <Input
+                              inputMode="numeric"
+                              value={raw}
+                              className="h-8"
+                              aria-label={`${st.first_name} ${sub.name} score`}
+                              onChange={(e) =>
+                                setScores((p) => ({ ...p, [key]: e.target.value }))
+                              }
+                            />
+                            <Badge variant="secondary" className="mt-1 text-[10px]">
+                              {band?.code ?? "—"}
+                            </Badge>
+                          </td>
+                        );
+                      })}
+                      <td className="align-top">
+                        <Textarea
+                          rows={2}
+                          value={comments[st.id] ?? ""}
+                          placeholder="Auto-filled if left blank"
+                          aria-label={`Comment for ${st.first_name}`}
+                          onChange={(e) =>
+                            setComments((p) => ({ ...p, [st.id]: e.target.value }))
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {(gridStudents ?? []).length === 0 ? (
+                    <tr>
+                      <td colSpan={(gridSubjects ?? []).length + 2} className="py-6 text-center text-muted-foreground">
+                        No active learners in this grade yet.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {!gradeId ? (
         <div className="card-nuru grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground">
           <BarChart3 className="size-6" /> Choose a grade to see the exam analysis.
