@@ -506,6 +506,7 @@ function SettingsPage() {
     onSuccess: (r) => {
       toast.success(`Teacher login ready for ${r.email}.`);
       setTeacherSubjects([]);
+      setTeacherGrades([]);
       void qc.invalidateQueries({ queryKey: ["school-staff"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -534,6 +535,10 @@ function SettingsPage() {
     mutationFn: async () => {
       const target = (hoiSchool || schoolId)!;
       if (!accessUser) throw new Error("Choose the Head of Institution first.");
+      if (accessGrades.length === 0)
+        throw new Error("Select at least one grade this Head of Institution may work with.");
+      if (accessModules.length === 0)
+        throw new Error("Select at least one module this Head of Institution may open.");
       const { error } = await supabase.from("hoi_access").upsert(
         {
           user_id: accessUser,
