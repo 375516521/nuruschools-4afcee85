@@ -486,6 +486,10 @@ function SettingsPage() {
     mutationFn: async (form: FormData) => {
       const target = isSuper ? hoiSchool || schoolId : schoolId;
       if (!target) throw new Error("Choose the school this teacher belongs to.");
+      if (teacherGrades.length === 0)
+        throw new Error("Select at least one grade this teacher teaches.");
+      if (teacherSubjects.length === 0)
+        throw new Error("Select at least one learning area this teacher teaches.");
       return callCreateTeacher({
         data: {
           school_id: target,
@@ -495,7 +499,7 @@ function SettingsPage() {
           phone: String(form.get("t_phone") ?? "").trim() || null,
           tsc_number: String(form.get("t_tsc") ?? "").trim() || null,
           subject_ids: teacherSubjects,
-          grade_id: teacherGrade || null,
+          grade_ids: teacherGrades,
         },
       });
     },
