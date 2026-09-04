@@ -37,7 +37,8 @@ import { createTeacherAccount } from "@/lib/staff-admin.functions";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const MODULES = ["students", "marks", "reports", "fees", "id-cards", "settings"] as const;
+/** Module keys must match ROUTE_MODULE in src/lib/access.ts. */
+const MODULES = ["admissions", "academics", "fees", "library", "assets"] as const;
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -92,7 +93,7 @@ function SettingsPage() {
   const [logoData, setLogoData] = useState<string | null>(null);
   const [sigData, setSigData] = useState<string | null>(null);
   const [streamGrade, setStreamGrade] = useState("");
-  const [teacherGrade, setTeacherGrade] = useState("");
+  const [teacherGrades, setTeacherGrades] = useState<string[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<string[]>([]);
   const [accessUser, setAccessUser] = useState("");
   const [accessGrades, setAccessGrades] = useState<string[]>([]);
@@ -485,6 +486,10 @@ function SettingsPage() {
     mutationFn: async (form: FormData) => {
       const target = isSuper ? hoiSchool || schoolId : schoolId;
       if (!target) throw new Error("Choose the school this teacher belongs to.");
+      if (teacherGrades.length === 0)
+        throw new Error("Select at least one grade this teacher teaches.");
+      if (teacherSubjects.length === 0)
+        throw new Error("Select at least one learning area this teacher teaches.");
       return callCreateTeacher({
         data: {
           school_id: target,
@@ -494,13 +499,14 @@ function SettingsPage() {
           phone: String(form.get("t_phone") ?? "").trim() || null,
           tsc_number: String(form.get("t_tsc") ?? "").trim() || null,
           subject_ids: teacherSubjects,
-          grade_id: teacherGrade || null,
+          grade_ids: teacherGrades,
         },
       });
     },
     onSuccess: (r) => {
       toast.success(`Teacher login ready for ${r.email}.`);
       setTeacherSubjects([]);
+      setTeacherGrades([]);
       void qc.invalidateQueries({ queryKey: ["school-staff"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -529,6 +535,10 @@ function SettingsPage() {
     mutationFn: async () => {
       const target = (hoiSchool || schoolId)!;
       if (!accessUser) throw new Error("Choose the Head of Institution first.");
+      if (accessGrades.length === 0)
+        throw new Error("Select at least one grade this Head of Institution may work with.");
+      if (accessModules.length === 0)
+        throw new Error("Select at least one module this Head of Institution may open.");
       const { error } = await supabase.from("hoi_access").upsert(
         {
           user_id: accessUser,
@@ -1078,18 +1088,24 @@ function SettingsPage() {
                   required
                 />
               </div>
-              <Select value={teacherGrade} onValueChange={setTeacherGrade}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Grade they teach" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(grades ?? []).map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+                <p className="text-xs tracking-wide uppercase text-muted-foreground">
+                  Grades taught (required)
+                </p>
+                {(grades ?? []).map((g) => (
+                  <label key={g.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={teacherGrades.includes(g.id)}
+                      onCheckedChange={(v) =>
+                        setTeacherGrades((prev) =>
+                          v ? [...prev, g.id] : prev.filter((x) => x !== g.id),
+                        )
+                      }
+                    />
+                    {g.name}
+                  </label>
+                ))}
+              </div>
               <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Learning areas taught
