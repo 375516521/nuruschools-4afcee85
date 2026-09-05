@@ -133,18 +133,26 @@ function FeesPage() {
     : "";
 
   function reminderLink(
-    s: { first_name: string; last_name: string; adm_no: string; guardian_phone: string | null },
+    s: {
+      first_name: string;
+      last_name: string;
+      adm_no: string;
+      guardian_phone: string | null;
+      grades?: unknown;
+      streams?: unknown;
+    },
     balance: number,
   ) {
     const phone = (s.guardian_phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
     const text = encodeURIComponent(
-      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
+      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}, ${gradeLabel(s)}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
     );
     return phone ? `https://wa.me/${phone}?text=${text}` : null;
   }
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkIndex, setBulkIndex] = useState(0);
+  const [bulkGrade, setBulkGrade] = useState("all");
 
   const record = useMutation({
     mutationFn: async (form: FormData) => {
@@ -197,7 +205,10 @@ function FeesPage() {
   const owing = (students ?? [])
     .map((s) => ({ s, balance: billedFor(s.grade_id) - paidFor(s.id) }))
     .filter((r) => r.balance > 0);
-  const owingWithPhone = owing.filter((r) => (r.s.guardian_phone ?? "").replace(/\D/g, "").length >= 9);
+  const owingInScope = owing.filter((r) => bulkGrade === "all" || r.s.grade_id === bulkGrade);
+  const owingWithPhone = owingInScope.filter(
+    (r) => (r.s.guardian_phone ?? "").replace(/\D/g, "").length >= 9,
+  );
 
   function sendNextReminder() {
     const target = owingWithPhone[bulkIndex];
@@ -262,6 +273,7 @@ function FeesPage() {
             variant="outline"
             onClick={() => {
               setBulkIndex(0);
+              setBulkGrade("all");
               setBulkOpen(true);
             }}
             disabled={owing.length === 0}
@@ -530,12 +542,35 @@ function FeesPage() {
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remind every parent with a balance</DialogTitle>
+            <DialogTitle>Remind parents with a balance</DialogTitle>
             <DialogDescription>
-              {owingWithPhone.length} of {owing.length} owing learners have a guardian phone number.
-              Each tap opens a ready-written WhatsApp message — keep tapping to work through the list.
+              {owingWithPhone.length} of {owingInScope.length} owing learners have a guardian phone
+              number. Each tap opens a ready-written WhatsApp message naming the learner and their
+              grade — keep tapping to work through the list.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-1.5">
+            <Label>Who to remind</Label>
+            <Select
+              value={bulkGrade}
+              onValueChange={(v) => {
+                setBulkGrade(v);
+                setBulkIndex(0);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Whole school ({owing.length} owing)</SelectItem>
+                {(grades ?? []).map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name} ({owing.filter((r) => r.s.grade_id === g.id).length} owing)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="max-h-64 space-y-1.5 overflow-y-auto text-sm">
             {owingWithPhone.map((r, i) => (
               <div
@@ -544,6 +579,9 @@ function FeesPage() {
               >
                 <span className="font-medium">
                   {r.s.first_name} {r.s.last_name}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {gradeLabel(r.s)}
+                  </span>
                 </span>
                 <span>{ksh(r.balance)}</span>
               </div>

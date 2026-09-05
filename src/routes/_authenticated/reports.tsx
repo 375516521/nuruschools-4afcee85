@@ -111,7 +111,7 @@ function ReportsPage() {
       (
         await supabase
           .from("students")
-          .select("id, adm_no, student_id, first_name, last_name, gender, streams(name)")
+          .select("id, adm_no, student_id, first_name, last_name, gender, photo_url, streams(name)")
           .eq("grade_id", gradeId)
           .eq("status", "active")
           .order("adm_no")
@@ -422,31 +422,45 @@ function ReportsPage() {
                   documentTitle="CBC Learner Report Card"
                   meta={`${yearLabel} Term ${termLabel} · ${gradeLabel}${(s as { streams?: { name?: string } }).streams?.name ? ` ${(s as { streams?: { name?: string } }).streams?.name}` : ""}`}
                 />
-                <div className="mt-3 grid gap-1 rounded-lg bg-secondary/60 p-3 text-xs sm:grid-cols-4">
-                  <p>
-                    <span className="text-muted-foreground">Learner:</span>{" "}
-                    <span className="font-semibold">
-                      {s.first_name} {s.last_name}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Admission:</span>{" "}
-                    <span className="font-mono font-medium">{s.adm_no}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Student ID:</span>{" "}
-                    <span className="font-mono font-medium">{s.student_id ?? "—"}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Gender:</span>{" "}
-                    <span className="font-medium">
-                      {(s as { gender?: string | null }).gender === "M"
-                        ? "Male"
-                        : (s as { gender?: string | null }).gender === "F"
-                          ? "Female"
-                          : "—"}
-                    </span>
-                  </p>
+                <div className="mt-3 flex items-center gap-3 rounded-lg bg-secondary/60 p-3 text-xs">
+                  {(s as { photo_url?: string | null }).photo_url ? (
+                    <img
+                      src={(s as { photo_url?: string | null }).photo_url!}
+                      alt={`${s.first_name} ${s.last_name}`}
+                      className="size-20 shrink-0 rounded-md border border-border object-cover"
+                    />
+                  ) : (
+                    <div className="grid size-20 shrink-0 place-items-center rounded-md border border-border bg-card font-display text-lg font-bold text-primary">
+                      {s.first_name[0]}
+                      {s.last_name[0]}
+                    </div>
+                  )}
+                  <div className="grid flex-1 gap-1 sm:grid-cols-2">
+                    <p>
+                      <span className="text-muted-foreground">Learner:</span>{" "}
+                      <span className="font-semibold">
+                        {s.first_name} {s.last_name}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Admission:</span>{" "}
+                      <span className="font-mono font-medium">{s.adm_no}</span>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Student ID:</span>{" "}
+                      <span className="font-mono font-medium">{s.student_id ?? "—"}</span>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Gender:</span>{" "}
+                      <span className="font-medium">
+                        {(s as { gender?: string | null }).gender === "M"
+                          ? "Male"
+                          : (s as { gender?: string | null }).gender === "F"
+                            ? "Female"
+                            : "—"}
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
                 <table className="mt-4 w-full text-sm">

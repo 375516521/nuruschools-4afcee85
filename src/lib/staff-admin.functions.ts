@@ -19,6 +19,7 @@ const teacherSchema = z.object({
   tsc_number: z.string().trim().max(30).optional().nullable(),
   subject_ids: z.array(z.string().uuid()).max(60).default([]),
   grade_ids: z.array(z.string().uuid()).max(20).default([]),
+  modules: z.array(z.string().max(30)).max(20).default([]),
 });
 
 /**
@@ -157,6 +158,20 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
       if (tsErr) throw new Error(tsErr.message);
     }
 
+
+    // Grade + module access for this teacher (what they may open in the app).
+    if (data.modules.length && data.grade_ids.length) {
+      const { error: aErr } = await supabaseAdmin.from("hoi_access").upsert(
+        {
+          user_id: userId,
+          school_id: data.school_id,
+          grade_ids: data.grade_ids,
+          modules: data.modules,
+        },
+        { onConflict: "user_id" },
+      );
+      if (aErr) throw new Error(aErr.message);
+    }
 
     await supabaseAdmin.from("audit_logs").insert({
       school_id: data.school_id,
