@@ -98,6 +98,7 @@ function SettingsPage() {
   const [accessUser, setAccessUser] = useState("");
   const [accessGrades, setAccessGrades] = useState<string[]>([]);
   const [accessModules, setAccessModules] = useState<string[]>([]);
+  const [teacherModules, setTeacherModules] = useState<string[]>([]);
 
   const { data: schools } = useQuery({
     queryKey: ["all-schools"],
@@ -490,6 +491,8 @@ function SettingsPage() {
         throw new Error("Select at least one grade this teacher teaches.");
       if (teacherSubjects.length === 0)
         throw new Error("Select at least one learning area this teacher teaches.");
+      if (teacherModules.length === 0)
+        throw new Error("Select at least one module this teacher may open.");
       return callCreateTeacher({
         data: {
           school_id: target,
@@ -500,6 +503,7 @@ function SettingsPage() {
           tsc_number: String(form.get("t_tsc") ?? "").trim() || null,
           subject_ids: teacherSubjects,
           grade_ids: teacherGrades,
+          modules: teacherModules,
         },
       });
     },
@@ -507,6 +511,7 @@ function SettingsPage() {
       toast.success(`Teacher login ready for ${r.email}.`);
       setTeacherSubjects([]);
       setTeacherGrades([]);
+      setTeacherModules([]);
       void qc.invalidateQueries({ queryKey: ["school-staff"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -514,20 +519,50 @@ function SettingsPage() {
 
   // ---- HOI access (super admin) -------------------------------------------
   const { data: hoiPeople } = useQuery({
-    queryKey: ["hoi-people", hoiSchool || schoolId],
-    enabled: isSuper && !!(hoiSchool || schoolId),
+    queryKey: ["access-people", hoiSchool || schoolId, isSuper],
+    enabled: isAdmin && !!(hoiSchool || schoolId),
     queryFn: async () => {
       const target = (hoiSchool || schoolId)!;
-      const roles = await supabase
+      // A super admin sets access for Heads of Institution and teachers;
+      // a Head of Institution may only set it for their own teachers.
+      const wanted = isSuper ? ["hoi", "teacher"] : ["teacher"];
+      const roleRows = await supabase
         .from("user_roles")
-        .select("user_id")
-        .eq("role", "hoi")
+        .select("user_id, role")
+        .in("role", wanted)
         .eq("school_id", target);
-      const ids = (roles.data ?? []).map((r) => r.user_id);
-      if (ids.length === 0) return [];
-      return (
-        (await supabase.from("profiles").select("id, full_name, email").in("id", ids)).data ?? []
-      );
+      const rows = roleRows.data ?? [];
+      if (rows.length === 0) return [];
+      const people =
+        (
+          await supabase
+            .from("profiles")
+            .select("id, full_name, email")
+            .in(
+              "id",
+              rows.map((r) => r.user_id),
+            )
+        ).data ?? [];
+      return people.map((p) => ({
+        ...p,
+        role: rows.find((r) => r.user_id === p.id)?.role ?? "",
+      }));
+    },
+  });
+
+  /** Load whatever access is already saved for the person being edited. */
+  useQuery({
+    queryKey: ["access-existing", accessUser],
+    enabled: !!accessUser,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("hoi_access")
+        .select("grade_ids, modules")
+        .eq("user_id", accessUser)
+        .maybeSingle();
+      setAccessGrades((data?.grade_ids as string[] | null) ?? []);
+      setAccessModules((data?.modules as string[] | null) ?? []);
+      return data ?? null;
     },
   });
 
@@ -535,10 +570,8 @@ function SettingsPage() {
     mutationFn: async () => {
       const target = (hoiSchool || schoolId)!;
       if (!accessUser) throw new Error("Choose the Head of Institution first.");
-      if (accessGrades.length === 0)
-        throw new Error("Select at least one grade this Head of Institution may work with.");
-      if (accessModules.length === 0)
-        throw new Error("Select at least one module this Head of Institution may open.");
+      if (accessGrades.length === 0) throw new Error("Select at least one grade for this member of staff.");
+      if (accessModules.length === 0) throw new Error("Select at least one module for this member of staff.");
       const { error } = await supabase.from("hoi_access").upsert(
         {
           user_id: accessUser,
@@ -550,7 +583,10 @@ function SettingsPage() {
       );
       if (error) throw error;
     },
-    onSuccess: () => toast.success("Access rules saved for this Head of Institution."),
+    onSuccess: () => {
+      toast.success("Access rules saved.");
+      void qc.invalidateQueries({ queryKey: ["hoi-access"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -1127,6 +1163,26 @@ function SettingsPage() {
                   <p className="text-sm text-muted-foreground">Add learning areas first.</p>
                 ) : null}
               </div>
+              <div className="space-y-1.5 rounded-lg border border-border p-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Modules they may open (required)
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {MODULES.map((m) => (
+                    <label key={m} className="flex items-center gap-2 text-sm capitalize">
+                      <Checkbox
+                        checked={teacherModules.includes(m)}
+                        onCheckedChange={(v) =>
+                          setTeacherModules((prev) =>
+                            v ? [...prev, m] : prev.filter((x) => x !== m),
+                          )
+                        }
+                      />
+                      {m}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <Button type="submit" className="w-full" disabled={createTeacher.isPending}>
                 {createTeacher.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -1139,23 +1195,26 @@ function SettingsPage() {
           </section>
         ) : null}
 
-        {isSuper ? (
+        {isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
-              <ShieldCheck className="size-4 text-primary" /> Head of Institution access
+              <ShieldCheck className="size-4 text-primary" /> Staff access
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Choose which grades and modules a Head of Institution may work with.
+              {isSuper
+                ? "Choose which grades and modules each Head of Institution or teacher may work with."
+                : "Choose which grades and modules each of your teachers may work with."}
             </p>
             <div className="mt-3 space-y-2">
               <Select value={accessUser} onValueChange={setAccessUser}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Head of Institution" />
+                  <SelectValue placeholder={isSuper ? "Head of Institution or teacher" : "Teacher"} />
                 </SelectTrigger>
                 <SelectContent>
                   {(hoiPeople ?? []).map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.full_name || p.email}
+                      {(p.full_name || p.email) as string}
+                      {p.role ? ` — ${p.role === "hoi" ? "Head of Institution" : "teacher"}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
