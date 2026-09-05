@@ -205,7 +205,10 @@ function FeesPage() {
   const owing = (students ?? [])
     .map((s) => ({ s, balance: billedFor(s.grade_id) - paidFor(s.id) }))
     .filter((r) => r.balance > 0);
-  const owingWithPhone = owing.filter((r) => (r.s.guardian_phone ?? "").replace(/\D/g, "").length >= 9);
+  const owingInScope = owing.filter((r) => bulkGrade === "all" || r.s.grade_id === bulkGrade);
+  const owingWithPhone = owingInScope.filter(
+    (r) => (r.s.guardian_phone ?? "").replace(/\D/g, "").length >= 9,
+  );
 
   function sendNextReminder() {
     const target = owingWithPhone[bulkIndex];
