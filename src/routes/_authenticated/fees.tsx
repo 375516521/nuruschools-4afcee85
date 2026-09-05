@@ -133,18 +133,26 @@ function FeesPage() {
     : "";
 
   function reminderLink(
-    s: { first_name: string; last_name: string; adm_no: string; guardian_phone: string | null },
+    s: {
+      first_name: string;
+      last_name: string;
+      adm_no: string;
+      guardian_phone: string | null;
+      grades?: unknown;
+      streams?: unknown;
+    },
     balance: number,
   ) {
     const phone = (s.guardian_phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
     const text = encodeURIComponent(
-      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
+      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}, ${gradeLabel(s)}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
     );
     return phone ? `https://wa.me/${phone}?text=${text}` : null;
   }
 
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkIndex, setBulkIndex] = useState(0);
+  const [bulkGrade, setBulkGrade] = useState("all");
 
   const record = useMutation({
     mutationFn: async (form: FormData) => {
