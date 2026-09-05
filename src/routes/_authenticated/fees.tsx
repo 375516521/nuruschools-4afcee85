@@ -541,12 +541,35 @@ function FeesPage() {
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Remind every parent with a balance</DialogTitle>
+            <DialogTitle>Remind parents with a balance</DialogTitle>
             <DialogDescription>
-              {owingWithPhone.length} of {owing.length} owing learners have a guardian phone number.
-              Each tap opens a ready-written WhatsApp message — keep tapping to work through the list.
+              {owingWithPhone.length} of {owingInScope.length} owing learners have a guardian phone
+              number. Each tap opens a ready-written WhatsApp message naming the learner and their
+              grade — keep tapping to work through the list.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-1.5">
+            <Label>Who to remind</Label>
+            <Select
+              value={bulkGrade}
+              onValueChange={(v) => {
+                setBulkGrade(v);
+                setBulkIndex(0);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Whole school ({owing.length} owing)</SelectItem>
+                {(grades ?? []).map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name} ({owing.filter((r) => r.s.grade_id === g.id).length} owing)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="max-h-64 space-y-1.5 overflow-y-auto text-sm">
             {owingWithPhone.map((r, i) => (
               <div
