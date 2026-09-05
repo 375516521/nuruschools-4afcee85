@@ -111,7 +111,7 @@ function ReportsPage() {
       (
         await supabase
           .from("students")
-          .select("id, adm_no, student_id, first_name, last_name, gender, streams(name)")
+          .select("id, adm_no, student_id, first_name, last_name, gender, photo_url, streams(name)")
           .eq("grade_id", gradeId)
           .eq("status", "active")
           .order("adm_no")

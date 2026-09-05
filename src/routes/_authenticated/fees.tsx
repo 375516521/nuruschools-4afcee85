@@ -273,6 +273,7 @@ function FeesPage() {
             variant="outline"
             onClick={() => {
               setBulkIndex(0);
+              setBulkGrade("all");
               setBulkOpen(true);
             }}
             disabled={owing.length === 0}
@@ -578,6 +579,9 @@ function FeesPage() {
               >
                 <span className="font-medium">
                   {r.s.first_name} {r.s.last_name}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {gradeLabel(r.s)}
+                  </span>
                 </span>
                 <span>{ksh(r.balance)}</span>
               </div>
