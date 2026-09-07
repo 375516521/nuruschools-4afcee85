@@ -291,7 +291,9 @@ function StudentsPage() {
     setEditing(s);
     setEditGrade(s.grade_id ?? "");
     setEditStream(s.stream_id ?? "");
+    setEditPhoto(s.photo_url ?? "");
   }
+
 
   return (
     <AppShell
