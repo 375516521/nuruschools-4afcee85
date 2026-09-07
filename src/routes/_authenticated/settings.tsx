@@ -525,7 +525,7 @@ function SettingsPage() {
       const target = (hoiSchool || schoolId)!;
       // A super admin sets access for Heads of Institution and teachers;
       // a Head of Institution may only set it for their own teachers.
-      const wanted = isSuper ? ["hoi", "teacher"] : ["teacher"];
+      const wanted = (isSuper ? ["hoi", "teacher"] : ["teacher"]) as ("hoi" | "teacher")[];
       const roleRows = await supabase
         .from("user_roles")
         .select("user_id, role")

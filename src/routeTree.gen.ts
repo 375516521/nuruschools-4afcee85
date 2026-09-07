@@ -22,6 +22,7 @@ import { Route as AuthenticatedFeesRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedIdCardsRouteImport } from './routes/_authenticated/id-cards'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedMarksRouteImport } from './routes/_authenticated/marks'
+import { Route as AuthenticatedPromotionsRouteImport } from './routes/_authenticated/promotions'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
@@ -92,6 +93,11 @@ const AuthenticatedMarksRoute = AuthenticatedMarksRouteImport.update({
   path: '/marks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPromotionsRoute = AuthenticatedPromotionsRouteImport.update({
+  id: '/promotions',
+  path: '/promotions',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/promotions': typeof AuthenticatedPromotionsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/id-cards': typeof AuthenticatedIdCardsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/marks': typeof AuthenticatedMarksRoute
+  '/promotions': typeof AuthenticatedPromotionsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/students': typeof AuthenticatedStudentsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/_authenticated/id-cards': typeof AuthenticatedIdCardsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/marks': typeof AuthenticatedMarksRoute
+  '/_authenticated/promotions': typeof AuthenticatedPromotionsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/id-cards'
     | '/library'
     | '/marks'
+    | '/promotions'
     | '/reports'
     | '/settings'
     | '/students'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/id-cards'
     | '/library'
     | '/marks'
+    | '/promotions'
     | '/reports'
     | '/settings'
     | '/students'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/_authenticated/id-cards'
     | '/_authenticated/library'
     | '/_authenticated/marks'
+    | '/_authenticated/promotions'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/students'
@@ -340,6 +352,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/promotions': {
+      id: '/_authenticated/promotions'
+      path: '/promotions'
+      fullPath: '/promotions'
+      preLoaderRoute: typeof AuthenticatedPromotionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -387,6 +406,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIdCardsRoute: typeof AuthenticatedIdCardsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedMarksRoute: typeof AuthenticatedMarksRoute
+  AuthenticatedPromotionsRoute: typeof AuthenticatedPromotionsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
@@ -402,6 +422,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIdCardsRoute: AuthenticatedIdCardsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedMarksRoute: AuthenticatedMarksRoute,
+  AuthenticatedPromotionsRoute: AuthenticatedPromotionsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,

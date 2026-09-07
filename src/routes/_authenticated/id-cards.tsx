@@ -93,6 +93,12 @@ function IdCardsPage() {
 
   const remaining = config ? config.upto_number - config.last_number : 0;
 
+  // 8 cards per A4 sheet (2 columns x 4 rows).
+  const cards = students ?? [];
+  const pages: (typeof cards)[] = [];
+  for (let i = 0; i < cards.length; i += 8) pages.push(cards.slice(i, i + 8));
+
+
   return (
     <AppShell
       title="ID cards"
@@ -183,74 +189,82 @@ function IdCardsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2 print:gap-2">
-        {(students ?? []).map((s) => (
-          <article
-            key={s.id}
-            className="break-inside-avoid overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-          >
-            <header className="flex items-center gap-2 bg-nuru-deep px-3 py-2 text-sidebar-foreground">
-              <SchoolLogo
-                school={school}
-                className="size-9 bg-sidebar-primary text-sidebar-primary-foreground"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-xs font-bold uppercase">{school?.name}</p>
-                <p className="truncate text-[9px] text-sidebar-foreground/70">
-                  {[school?.county ? `${school.county} County` : null, school?.phone]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </div>
-              <span className="rounded bg-sidebar-primary px-1.5 py-0.5 text-[8px] font-bold tracking-widest text-sidebar-primary-foreground uppercase">
-                Student ID
-              </span>
-            </header>
-            <div className="flex gap-3 p-3">
-              {s.photo_url ? (
-                <img
-                  src={s.photo_url}
-                  alt={`${s.first_name} ${s.last_name}`}
-                  className="size-20 rounded-lg border border-border object-cover"
+      {pages.map((page, pi) => (
+        <div
+          key={pi}
+          className="card-nuru print-sheet mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 print:mb-0 print:grid-cols-2 print:gap-[4mm] print:break-after-page"
+        >
+          {page.map((s) => (
+            <article
+              key={s.id}
+              className="break-inside-avoid overflow-hidden rounded-xl border border-border bg-card shadow-sm print:h-[58mm] print:shadow-none"
+            >
+              <header className="id-card-header flex items-center gap-2 bg-nuru-deep px-3 py-2 text-sidebar-foreground">
+                <SchoolLogo
+                  school={school}
+                  className="size-9 bg-sidebar-primary text-sidebar-primary-foreground"
                 />
-              ) : (
-                <div className="grid size-20 shrink-0 place-items-center rounded-lg border border-border bg-secondary font-display text-lg font-bold text-primary">
-                  {s.first_name[0]}
-                  {s.last_name[0]}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-xs font-bold uppercase">
+                    {school?.name}
+                  </p>
+                  <p className="truncate text-[9px] text-sidebar-foreground/70">
+                    {[school?.county ? `${school.county} County` : null, school?.phone]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 </div>
-              )}
-              <div className="min-w-0 flex-1 text-[11px] leading-snug">
-                <p className="truncate font-display text-sm font-bold">
-                  {s.first_name} {s.last_name}
-                </p>
-                <p className="text-muted-foreground">
-                  {(s.grades as { name?: string } | null)?.name}
-                  {(s.streams as { name?: string } | null)?.name
-                    ? ` ${(s.streams as { name?: string }).name}`
-                    : ""}
-                </p>
-                <p className="mt-1 font-mono">ADM {s.adm_no}</p>
-                <p className="font-mono">ID {s.student_id ?? "—"}</p>
-                {s.guardian_phone ? (
-                  <p className="truncate text-muted-foreground">Guardian {s.guardian_phone}</p>
-                ) : null}
+                <span className="rounded bg-sidebar-primary px-1.5 py-0.5 text-[8px] font-bold tracking-widest text-sidebar-primary-foreground uppercase">
+                  Student ID
+                </span>
+              </header>
+              <div className="flex gap-3 p-3">
+                {s.photo_url ? (
+                  <img
+                    src={s.photo_url}
+                    alt={`${s.first_name} ${s.last_name}`}
+                    className="size-20 shrink-0 rounded-lg border border-border object-cover"
+                  />
+                ) : (
+                  <div className="grid size-20 shrink-0 place-items-center rounded-lg border border-border bg-secondary font-display text-lg font-bold text-primary">
+                    {s.first_name[0]}
+                    {s.last_name[0]}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1 text-[11px] leading-snug">
+                  <p className="truncate font-display text-sm font-bold">
+                    {s.first_name} {s.last_name}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {(s.grades as { name?: string } | null)?.name}
+                    {(s.streams as { name?: string } | null)?.name
+                      ? ` ${(s.streams as { name?: string }).name}`
+                      : ""}
+                  </p>
+                  <p className="mt-1 font-mono">ADM {s.adm_no}</p>
+                  <p className="font-mono">ID {s.student_id ?? "—"}</p>
+                  {s.guardian_phone ? (
+                    <p className="truncate text-muted-foreground">Guardian {s.guardian_phone}</p>
+                  ) : null}
+                </div>
+                <div className="shrink-0 text-center">
+                  <QRCodeSVG value={verifyUrl(s.adm_no)} size={54} />
+                  <p className="mt-1 text-[7px] text-muted-foreground">Scan to verify</p>
+                </div>
               </div>
-              <div className="shrink-0 text-center">
-                <QRCodeSVG value={verifyUrl(s.adm_no)} size={58} />
-                <p className="mt-1 text-[7px] text-muted-foreground">Scan to verify</p>
-              </div>
-            </div>
-            <footer className="flex items-center justify-between border-t border-border bg-secondary/60 px-3 py-1.5 text-[8px] text-muted-foreground">
-              <span>
-                {school?.school_code}
-                {school?.uli_code ? ` · ULI ${school.uli_code}` : ""} · Valid{" "}
-                {new Date().getFullYear()}
-              </span>
-              <span>{NURU.name}</span>
-            </footer>
-          </article>
-        ))}
-      </div>
+              <footer className="flex items-center justify-between border-t border-border bg-secondary/60 px-3 py-1.5 text-[8px] text-muted-foreground">
+                <span>
+                  {school?.school_code}
+                  {school?.uli_code ? ` · ULI ${school.uli_code}` : ""} · Valid{" "}
+                  {new Date().getFullYear()}
+                </span>
+                <span>{NURU.name}</span>
+              </footer>
+            </article>
+          ))}
+        </div>
+      ))}
+
     </AppShell>
   );
 }

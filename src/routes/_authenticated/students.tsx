@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/table";
 import { LearnerImport } from "@/components/LearnerImport";
 import { logAudit } from "@/lib/audit";
+import { fileToDataUrl } from "@/lib/image-upload";
 
 export const Route = createFileRoute("/_authenticated/students")({
   component: StudentsPage,
@@ -110,7 +111,9 @@ function StudentsPage() {
 
   const [editing, setEditing] = useState<Learner | null>(null);
   const [editGrade, setEditGrade] = useState("");
+  const [editPhoto, setEditPhoto] = useState("");
   const [editStream, setEditStream] = useState("");
+
   const [transferring, setTransferring] = useState<Learner | null>(null);
   const [deleting, setDeleting] = useState<Learner | null>(null);
 
@@ -200,7 +203,11 @@ function StudentsPage() {
         guardian_phone: form.get("guardian_phone") || null,
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0]!.message);
-      const { error } = await supabase.from("students").update(parsed.data).eq("id", editing.id);
+      const { error } = await supabase
+        .from("students")
+        .update({ ...parsed.data, photo_url: editPhoto || null })
+        .eq("id", editing.id);
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -291,7 +298,9 @@ function StudentsPage() {
     setEditing(s);
     setEditGrade(s.grade_id ?? "");
     setEditStream(s.stream_id ?? "");
+    setEditPhoto(s.photo_url ?? "");
   }
+
 
   return (
     <AppShell
@@ -566,6 +575,49 @@ function StudentsPage() {
                 update.mutate(new FormData(e.currentTarget));
               }}
             >
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                {editPhoto ? (
+                  <img
+                    src={editPhoto}
+                    alt="Learner photo"
+                    className="size-16 rounded-lg border border-border object-cover"
+                  />
+                ) : (
+                  <div className="grid size-16 place-items-center rounded-lg border border-border bg-secondary font-display text-base font-bold text-primary">
+                    {editing.first_name[0]}
+                    {editing.last_name[0]}
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="ephoto">Learner photo</Label>
+                  <Input
+                    id="ephoto"
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        setEditPhoto(await fileToDataUrl(file, 360));
+                        toast.success("Photo ready — save changes to keep it.");
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                  />
+                  {editPhoto ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditPhoto("")}
+                    >
+                      Remove photo
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="efn">First name</Label>

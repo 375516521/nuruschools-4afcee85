@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ksh } from "@/lib/nuru";
+import { useHoiAccess, canUseRoute } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -19,6 +20,8 @@ function DashboardPage() {
   const school = session?.school as { name?: string; school_code?: string } | null;
   const { data: term } = useActiveTerm(schoolId);
   const roles = session?.roles ?? [];
+  const isSuper = roles.includes("superadmin");
+  const { data: access } = useHoiAccess(session?.user?.id ?? null);
 
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats", schoolId, term?.id],
@@ -85,16 +88,18 @@ function DashboardPage() {
       <section className="mt-5 grid gap-4 md:grid-cols-3">
         {[
           { to: "/students", title: "Add a learner", body: "Admission number and student ID generate automatically." },
-          { to: "/id-cards", title: "Print ID cards", body: "Set ranges per grade, then bulk print 10 cards per A4 page." },
+          { to: "/id-cards", title: "Print ID cards", body: "Set ranges per grade, then bulk print 8 cards per A4 page." },
           { to: "/fees", title: "Record a payment", body: "Cash, bank or MPESA — balances update instantly." },
-        ].map((c) => (
+        ]
+          .filter((c) => canUseRoute(c.to, isSuper, access ?? null))
+          .map((c) => (
           <Link key={c.to} to={c.to} className="card-nuru group p-5 transition-colors hover:border-primary">
             <h3 className="flex items-center gap-2 font-display font-semibold">
               {c.title} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">{c.body}</p>
           </Link>
-        ))}
+          ))}
       </section>
     </AppShell>
   );
