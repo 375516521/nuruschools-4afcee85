@@ -93,6 +93,11 @@ function IdCardsPage() {
 
   const remaining = config ? config.upto_number - config.last_number : 0;
 
+  // 8 cards per A4 sheet (2 columns x 4 rows).
+  const pages: (typeof students)[] = [];
+  for (let i = 0; i < (students?.length ?? 0); i += 8) pages.push((students ?? []).slice(i, i + 8));
+
+
   return (
     <AppShell
       title="ID cards"
