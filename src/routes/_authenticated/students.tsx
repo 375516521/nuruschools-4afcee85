@@ -110,7 +110,9 @@ function StudentsPage() {
 
   const [editing, setEditing] = useState<Learner | null>(null);
   const [editGrade, setEditGrade] = useState("");
+  const [editPhoto, setEditPhoto] = useState("");
   const [editStream, setEditStream] = useState("");
+
   const [transferring, setTransferring] = useState<Learner | null>(null);
   const [deleting, setDeleting] = useState<Learner | null>(null);
 
