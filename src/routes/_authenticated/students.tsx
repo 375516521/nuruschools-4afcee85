@@ -202,7 +202,11 @@ function StudentsPage() {
         guardian_phone: form.get("guardian_phone") || null,
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0]!.message);
-      const { error } = await supabase.from("students").update(parsed.data).eq("id", editing.id);
+      const { error } = await supabase
+        .from("students")
+        .update({ ...parsed.data, photo_url: editPhoto || null })
+        .eq("id", editing.id);
+
       if (error) throw error;
     },
     onSuccess: () => {
