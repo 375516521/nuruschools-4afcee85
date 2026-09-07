@@ -293,3 +293,15 @@
 }
 
 
+
+/* ID cards: the dark card header keeps its white text when printed. */
+@media print {
+  .print-sheet .id-card-header,
+  .print-sheet .id-card-header * {
+    color: #ffffff !important;
+  }
+
+  .print-sheet .id-card-header {
+    background-color: #22503f !important;
+  }
+}
