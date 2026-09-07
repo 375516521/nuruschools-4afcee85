@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/table";
 import { LearnerImport } from "@/components/LearnerImport";
 import { logAudit } from "@/lib/audit";
+import { fileToDataUrl } from "@/lib/image-upload";
 
 export const Route = createFileRoute("/_authenticated/students")({
   component: StudentsPage,
