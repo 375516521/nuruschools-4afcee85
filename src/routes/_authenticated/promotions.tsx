@@ -43,8 +43,42 @@ type Grade = { id: string; name: string; level_order: number };
 
 function PromotionsPage() {
   const { data: session } = useSession();
+  const roles = session?.roles ?? [];
+  if (session && !roles.includes("superadmin") && !roles.includes("hoi")) {
+    return (
+      <AppShell title="Promotions & term rollover">
+        <div className="card-nuru p-5 text-sm text-muted-foreground">
+          Only the Head of Institution or super admin can promote learners or change the term.
+        </div>
+      </AppShell>
+    );
+  }
+  return <PromotionsInner />;
+}
+
+function PromotionsInner() {
+  const { data: session } = useSession();
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
   const qc = useQueryClient();
+  const { data: balances } = useQuery({
+    queryKey: ["promote-balances", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () => {
+      const [st, fs, fp, fd] = await Promise.all([
+        supabase.from("students").select("id, grade_id").eq("school_id", schoolId!).eq("status", "active"),
+        supabase.from("fee_structures").select("grade_id, amount").eq("school_id", schoolId!),
+        supabase.from("fee_payments").select("student_id, amount").eq("school_id", schoolId!),
+        supabase.from("fee_discounts").select("student_id, amount").eq("school_id", schoolId!),
+      ]);
+      const perGrade = new Map<string, number>();
+      for (const f of fs.data ?? []) perGrade.set(f.grade_id, (perGrade.get(f.grade_id) ?? 0) + Number(f.amount));
+      const out: Record<string, number> = {};
+      for (const s of st.data ?? []) out[s.id] = s.grade_id ? (perGrade.get(s.grade_id) ?? 0) : 0;
+      for (const p of fp.data ?? []) if (p.student_id in out) out[p.student_id] -= Number(p.amount);
+      for (const d of fd.data ?? []) if (d.student_id in out) out[d.student_id] -= Number(d.amount);
+      return out;
+    },
+  });
 
   const [fromGrade, setFromGrade] = useState("");
   const [toGrade, setToGrade] = useState("");

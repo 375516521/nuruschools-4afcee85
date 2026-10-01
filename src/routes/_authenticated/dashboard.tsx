@@ -91,7 +91,7 @@ function DashboardPage() {
           { to: "/id-cards", title: "Print ID cards", body: "Set ranges per grade, then bulk print 8 cards per A4 page." },
           { to: "/fees", title: "Record a payment", body: "Cash, bank or MPESA — balances update instantly." },
         ]
-          .filter((c) => canUseRoute(c.to, isSuper, access ?? null))
+          .filter((c) => canUseRoute(c.to, isSuper, access ?? null, roles))
           .map((c) => (
           <Link key={c.to} to={c.to} className="card-nuru group p-5 transition-colors hover:border-primary">
             <h3 className="flex items-center gap-2 font-display font-semibold">
