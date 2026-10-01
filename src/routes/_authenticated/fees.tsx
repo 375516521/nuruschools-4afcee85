@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { ksh, NURU } from "@/lib/nuru";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
+import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/fees")({
   component: FeesPage,
@@ -59,7 +60,73 @@ function FeesPage() {
   const { data: session } = useSession();
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
   const school = session?.school as SchoolInfo;
-  const { data: term } = useActiveTerm(schoolId);
+  const { data: activeTerm } = useActiveTerm(schoolId);
+  const roles = session?.roles ?? [];
+  const isAdmin = roles.includes("superadmin") || roles.includes("hoi");
+  const [termId, setTermId] = useState("");
+  const { data: allTerms } = useQuery({
+    queryKey: ["all-terms-full", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("terms")
+          .select("id, term_number, is_active, start_date, end_date, academic_years(year, id)")
+          .eq("school_id", schoolId!)
+          .order("term_number")
+      ).data ?? [],
+  });
+  const term = (allTerms ?? []).find((t) => t.id === termId) ?? activeTerm ?? null;
+  const [discOpen, setDiscOpen] = useState<string | null>(null);
+  const { data: discounts } = useQuery({
+    queryKey: ["fee-discounts", schoolId, term?.id],
+    enabled: !!schoolId && !!term,
+    queryFn: async () =>
+      (
+        await supabase
+          .from("fee_discounts")
+          .select("*")
+          .eq("school_id", schoolId!)
+          .eq("term_id", term!.id)
+      ).data ?? [],
+  });
+  const discountFor = (id: string) =>
+    (discounts ?? []).filter((d) => d.student_id === id).reduce((a, d) => a + Number(d.amount), 0);
+  const addDiscount = useMutation({
+    mutationFn: async (form: FormData) => {
+      const amount = Number(form.get("amount"));
+      if (!term || !discOpen) throw new Error("No term selected.");
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter an amount greater than zero.");
+      const { error } = await supabase.from("fee_discounts").insert({
+        school_id: schoolId!,
+        term_id: term.id,
+        student_id: discOpen,
+        amount,
+        reason: String(form.get("reason") ?? "").trim() || null,
+        created_by: session?.user?.id ?? null,
+      });
+      if (error) throw error;
+      await logAudit("add_fee_discount", "students", discOpen, { amount, term: term.id });
+    },
+    onSuccess: () => {
+      toast.success("Discount applied.");
+      setDiscOpen(null);
+      void qc.invalidateQueries({ queryKey: ["fee-discounts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const removeDiscount = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("fee_discounts").delete().eq("id", id);
+      if (error) throw error;
+      await logAudit("remove_fee_discount", "fee_discounts", id);
+    },
+    onSuccess: () => {
+      toast.success("Discount removed.");
+      void qc.invalidateQueries({ queryKey: ["fee-discounts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [studentId, setStudentId] = useState("");
@@ -121,10 +188,13 @@ function FeesPage() {
       ).data ?? [],
   });
 
-  const billedFor = (grade_id: string | null) =>
+  const grossFor = (grade_id: string | null) =>
     (structures ?? [])
       .filter((f) => f.grade_id === grade_id)
       .reduce((a, f) => a + Number(f.amount), 0);
+  /** Amount owed for the term after discounts. */
+  const billedFor = (grade_id: string | null, studentId?: string) =>
+    grossFor(grade_id) - (studentId ? discountFor(studentId) : 0);
   const paidFor = (id: string) =>
     (payments ?? []).filter((p) => p.student_id === id).reduce((a, p) => a + Number(p.amount), 0);
 
@@ -180,7 +250,7 @@ function FeesPage() {
       toast.success("Payment recorded — receipt ready.");
       const s = (students ?? []).find((x) => x.id === p.student_id);
       if (s) {
-        const balance = billedFor(s.grade_id) - (paidFor(s.id) + Number(p.amount));
+        const balance = billedFor(s.grade_id, s.id) - (paidFor(s.id) + Number(p.amount));
         setReceipt({
           learner: `${s.first_name} ${s.last_name}`,
           admNo: s.adm_no,
@@ -203,7 +273,7 @@ function FeesPage() {
   const totalCollected = (payments ?? []).reduce((a, p) => a + Number(p.amount), 0);
 
   const owing = (students ?? [])
-    .map((s) => ({ s, balance: billedFor(s.grade_id) - paidFor(s.id) }))
+    .map((s) => ({ s, balance: billedFor(s.grade_id, s.id) - paidFor(s.id) }))
     .filter((r) => r.balance > 0);
   const owingInScope = owing.filter((r) => bulkGrade === "all" || r.s.grade_id === bulkGrade);
   const owingWithPhone = owingInScope.filter(
@@ -265,9 +335,22 @@ function FeesPage() {
   return (
     <AppShell
       title="Fees"
-      subtitle={term ? `${ksh(totalCollected)} collected this term` : "No active term"}
+      subtitle={term ? `${ksh(totalCollected)} collected · ${termLabel}` : "No active term"}
       actions={
         <>
+          <Select value={term?.id ?? ""} onValueChange={setTermId}>
+            <SelectTrigger className="h-9 w-[170px]">
+              <SelectValue placeholder="Choose term" />
+            </SelectTrigger>
+            <SelectContent>
+              {(allTerms ?? []).map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {(t.academic_years as { year?: number } | null)?.year} Term {t.term_number}
+                  {t.is_active ? " (current)" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             size="sm"
             variant="outline"
@@ -282,7 +365,7 @@ function FeesPage() {
           </Button>
           <Dialog open={structOpen} onOpenChange={setStructOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" className={isAdmin ? "" : "hidden"}>
                 <Plus className="size-4" /> Fee structure
               </Button>
             </DialogTrigger>
@@ -437,17 +520,19 @@ function FeesPage() {
               <TableHead>Admission No</TableHead>
               <TableHead>Learner</TableHead>
               <TableHead className="text-right">Billed</TableHead>
+              <TableHead className="text-right">Discount</TableHead>
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Parent</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {(students ?? []).map((s) => {
-              const billed = billedFor(s.grade_id);
+              const gross = grossFor(s.grade_id);
+              const disc = discountFor(s.id);
               const paid = paidFor(s.id);
-              const bal = billed - paid;
+              const bal = gross - disc - paid;
               const link = bal > 0 ? reminderLink(s, bal) : null;
               return (
                 <TableRow key={s.id}>
@@ -455,7 +540,8 @@ function FeesPage() {
                   <TableCell className="font-medium">
                     {s.first_name} {s.last_name}
                   </TableCell>
-                  <TableCell className="text-right">{ksh(billed)}</TableCell>
+                  <TableCell className="text-right">{ksh(gross)}</TableCell>
+                  <TableCell className="text-right">{disc > 0 ? ksh(disc) : "—"}</TableCell>
                   <TableCell className="text-right">{ksh(paid)}</TableCell>
                   <TableCell className="text-right font-medium">{ksh(bal)}</TableCell>
                   <TableCell>
@@ -464,15 +550,22 @@ function FeesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {link ? (
-                      <Button asChild size="sm" variant="outline">
-                        <a href={link} target="_blank" rel="noreferrer">
-                          <MessageCircle className="size-4" /> Remind
-                        </a>
-                      </Button>
-                    ) : bal > 0 ? (
-                      <span className="text-xs text-muted-foreground">No phone</span>
-                    ) : null}
+                    <div className="flex justify-end gap-1">
+                      {isAdmin ? (
+                        <Button size="sm" variant="ghost" onClick={() => setDiscOpen(s.id)}>
+                          Discount
+                        </Button>
+                      ) : null}
+                      {link ? (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={link} target="_blank" rel="noreferrer">
+                            <MessageCircle className="size-4" /> Remind
+                          </a>
+                        </Button>
+                      ) : bal > 0 ? (
+                        <span className="self-center text-xs text-muted-foreground">No phone</span>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -480,6 +573,70 @@ function FeesPage() {
           </TableBody>
         </Table>
       </div>
+
+      {(discounts ?? []).length > 0 ? (
+        <div className="card-nuru mt-5 overflow-x-auto">
+          <div className="border-b border-border p-4">
+            <p className="font-display text-sm font-semibold">Discounts this term</p>
+          </div>
+          <Table>
+            <TableBody>
+              {(discounts ?? []).map((d) => {
+                const s = (students ?? []).find((x) => x.id === d.student_id);
+                return (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-medium">
+                      {s ? `${s.first_name} ${s.last_name}` : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{d.reason ?? "—"}</TableCell>
+                    <TableCell className="text-right">{ksh(Number(d.amount))}</TableCell>
+                    <TableCell className="text-right">
+                      {isAdmin ? (
+                        <Button size="sm" variant="ghost" onClick={() => removeDiscount.mutate(d.id)}>
+                          Remove
+                        </Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : null}
+
+      <Dialog open={!!discOpen} onOpenChange={(o) => !o && setDiscOpen(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Give a fee discount</DialogTitle>
+            <DialogDescription>
+              Reduces what this learner owes for {termLabel}.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              addDiscount.mutate(new FormData(e.currentTarget));
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="damt">Amount (KSh)</Label>
+              <Input id="damt" name="amount" type="number" min={1} required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dreason">Reason</Label>
+              <Input id="dreason" name="reason" placeholder="Sibling, bursary, staff child…" />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={addDiscount.isPending}>
+                {addDiscount.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Apply
+                discount
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="card-nuru mt-5 overflow-x-auto">
         <div className="border-b border-border p-4">
