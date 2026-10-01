@@ -681,7 +681,7 @@ function FeesPage() {
                           method: p.method,
                           reference: p.reference,
                           paidAt: p.paid_at,
-                          balance: s ? billedFor(s.grade_id) - paidFor(s.id) : 0,
+                          balance: s ? billedFor(s.grade_id, s.id) - paidFor(s.id) : 0,
                           receiptNo: p.id.slice(0, 8).toUpperCase(),
                         })
                       }

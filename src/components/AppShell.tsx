@@ -32,6 +32,7 @@ const NAV = [
   { to: "/fees", label: "Fees & Finance", icon: Wallet },
   { to: "/library", label: "Library", icon: BookOpen },
   { to: "/assets", label: "Assets", icon: Boxes },
+  { to: "/promotions", label: "Promotions", icon: GraduationCap },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -82,10 +83,11 @@ export function useActiveTerm(schoolId?: string | null) {
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: session } = useSession();
-  const isSuper = (session?.roles ?? []).includes("superadmin");
+  const roles = session?.roles ?? [];
+  const isSuper = roles.includes("superadmin");
   const { data: access } = useHoiAccess(session?.user?.id ?? null);
   const items = (isSuper ? [...NAV, ...SUPER_NAV] : NAV).filter((i) =>
-    canUseRoute(i.to, isSuper, access ?? null),
+    canUseRoute(i.to, isSuper, access ?? null, roles),
   );
   return (
     <nav className="flex flex-col gap-1">

@@ -32,8 +32,18 @@ export function useHoiAccess(userId?: string | null) {
   });
 }
 
-export function canUseRoute(route: string, isSuper: boolean, access: HoiAccess): boolean {
+/** Routes reserved for school administrators (super admin or Head of Institution). */
+export const ADMIN_ROUTES = ["/promotions", "/settings"];
+
+export function canUseRoute(
+  route: string,
+  isSuper: boolean,
+  access: HoiAccess,
+  roles: string[] = [],
+): boolean {
   if (isSuper) return true;
+  if (route === "/users") return false;
+  if (ADMIN_ROUTES.includes(route) && !roles.includes("hoi")) return false;
   const mod = ROUTE_MODULE[route];
   if (!mod) return true;
   const mods = access?.modules ?? null;
