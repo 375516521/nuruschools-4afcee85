@@ -75,8 +75,8 @@ function PromotionsInner() {
       for (const f of fs.data ?? []) perGrade.set(f.grade_id, (perGrade.get(f.grade_id) ?? 0) + Number(f.amount));
       const out: Record<string, number> = {};
       for (const s of st.data ?? []) out[s.id] = s.grade_id ? (perGrade.get(s.grade_id) ?? 0) : 0;
-      for (const p of fp.data ?? []) if (p.student_id in out) out[p.student_id] -= Number(p.amount);
-      for (const d of fd.data ?? []) if (d.student_id in out) out[d.student_id] -= Number(d.amount);
+      for (const p of fp.data ?? []) if (p.student_id in out) out[p.student_id] = (out[p.student_id] ?? 0) - Number(p.amount);
+      for (const d of fd.data ?? []) if (d.student_id in out) out[d.student_id] = (out[d.student_id] ?? 0) - Number(d.amount);
       return out;
     },
   });
