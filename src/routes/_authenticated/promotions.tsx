@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logAudit } from "@/lib/audit";
+import { ksh } from "@/lib/nuru";
 
 export const Route = createFileRoute("/_authenticated/promotions")({
   component: PromotionsPage,
@@ -74,8 +75,8 @@ function PromotionsInner() {
       for (const f of fs.data ?? []) perGrade.set(f.grade_id, (perGrade.get(f.grade_id) ?? 0) + Number(f.amount));
       const out: Record<string, number> = {};
       for (const s of st.data ?? []) out[s.id] = s.grade_id ? (perGrade.get(s.grade_id) ?? 0) : 0;
-      for (const p of fp.data ?? []) if (p.student_id in out) out[p.student_id] -= Number(p.amount);
-      for (const d of fd.data ?? []) if (d.student_id in out) out[d.student_id] -= Number(d.amount);
+      for (const p of fp.data ?? []) if (p.student_id in out) out[p.student_id] = (out[p.student_id] ?? 0) - Number(p.amount);
+      for (const d of fd.data ?? []) if (d.student_id in out) out[d.student_id] = (out[d.student_id] ?? 0) - Number(d.amount);
       return out;
     },
   });
@@ -129,7 +130,7 @@ function PromotionsInner() {
       (
         await supabase
           .from("terms")
-          .select("id, term_number, is_active, academic_years(year)")
+          .select("id, term_number, is_active, academic_year_id, academic_years(year)")
           .eq("school_id", schoolId!)
           .order("term_number")
       ).data ?? [],
@@ -219,7 +220,14 @@ function PromotionsInner() {
           .select("grade_id, item, amount")
           .eq("school_id", schoolId!)
           .eq("term_id", fromTerm);
-        const rows = (source.data ?? []).map((r) => ({ ...r, school_id: schoolId!, term_id: toTerm }));
+        const target = (terms ?? []).find((t) => t.id === toTerm);
+        if (!target) throw new Error("Term not found.");
+        const rows = (source.data ?? []).map((r) => ({
+          ...r,
+          school_id: schoolId!,
+          term_id: toTerm,
+          academic_year_id: target.academic_year_id,
+        }));
         if (rows.length > 0) {
           const { error } = await supabase.from("fee_structures").insert(rows);
           if (error) throw error;
@@ -300,7 +308,9 @@ function PromotionsInner() {
             </div>
             <Button
               className="w-full"
-              onClick={() => promote.mutate()}
+              onClick={() => {
+                if (window.confirm(`Move ${chosen.length} learners to the new class?`)) promote.mutate();
+              }}
               disabled={promote.isPending || chosen.length === 0}
             >
               {promote.isPending ? (
@@ -314,7 +324,9 @@ function PromotionsInner() {
               <Button
                 variant="secondary"
                 className="w-full"
-                onClick={() => graduate.mutate()}
+                onClick={() => {
+                  if (window.confirm(`Mark ${chosen.length} learners as graduated?`)) graduate.mutate();
+                }}
                 disabled={graduate.isPending || chosen.length === 0}
               >
                 <GraduationCap className="size-4" /> Graduate {chosen.length} finalists
@@ -362,7 +374,7 @@ function PromotionsInner() {
             </div>
             <Button
               className="w-full"
-              onClick={() => rollTerm.mutate(true)}
+              onClick={() => { if (window.confirm("Switch the whole school to this term?")) rollTerm.mutate(true); }}
               disabled={rollTerm.isPending}
             >
               {rollTerm.isPending ? (
@@ -375,7 +387,7 @@ function PromotionsInner() {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => rollTerm.mutate(false)}
+              onClick={() => { if (window.confirm("Switch the whole school to this term?")) rollTerm.mutate(false); }}
               disabled={rollTerm.isPending}
             >
               Open term only
@@ -429,6 +441,11 @@ function PromotionsInner() {
                       {l.first_name} {l.last_name}
                     </span>
                     <span className="font-mono text-xs text-muted-foreground">{l.adm_no}</span>
+                    {(balances?.[l.id] ?? 0) > 0 ? (
+                      <span className="text-xs font-medium text-destructive">
+                        owes {ksh(balances?.[l.id] ?? 0)}
+                      </span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
