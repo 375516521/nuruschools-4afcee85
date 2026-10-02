@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell, useSession } from "@/components/AppShell";
+import { SchoolAccessDialog } from "@/components/SchoolAccessDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ function UsersPage() {
   const callUpdate = useServerFn(updateUserAccount);
   const callDelete = useServerFn(deleteUserAccount);
   const callSchoolActive = useServerFn(setSchoolActive);
+  const [accessSchool, setAccessSchool] = useState<{ id: string; name: string } | null>(null);
 
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -360,16 +362,21 @@ function UsersPage() {
                     <p className="truncate text-sm font-medium">{s.name}</p>
                     <p className="font-mono text-xs text-muted-foreground">{s.school_code}</p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={s.is_active ? "outline" : "default"}
-                    disabled={toggleSchool.isPending}
-                    onClick={() =>
-                      toggleSchool.mutate({ school_id: s.id, is_active: !s.is_active })
-                    }
-                  >
-                    {s.is_active ? "Deactivate" : "Activate"}
-                  </Button>
+                  <div className="flex shrink-0 gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setAccessSchool(s)}>
+                      Manage HOI Access
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={s.is_active ? "outline" : "default"}
+                      disabled={toggleSchool.isPending}
+                      onClick={() =>
+                        toggleSchool.mutate({ school_id: s.id, is_active: !s.is_active })
+                      }
+                    >
+                      {s.is_active ? "Deactivate" : "Activate"}
+                    </Button>
+                  </div>
                 </div>
               ))}
               {(schools ?? []).length === 0 ? (

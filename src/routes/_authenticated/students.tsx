@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
+import { onlyEnabledGrades } from "@/lib/access";
 import { AppShell, useSession } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,8 +122,7 @@ function StudentsPage() {
     queryKey: ["grades", schoolId],
     enabled: !!schoolId,
     queryFn: async () =>
-      (await supabase.from("grades").select("*").eq("school_id", schoolId!).order("level_order"))
-        .data ?? [],
+      onlyEnabledGrades(schoolId!, (await supabase.from("grades").select("*").eq("school_id", schoolId!).order("level_order")).data ?? []),
   });
 
   const { data: streams } = useQuery({

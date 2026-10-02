@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type HoiAccess = { grade_ids: string[] | null; modules: string[] | null } | null;
 
-/** Module key each navigation route belongs to. Routes not listed are always available. */
+/** Per-user module key each navigation route belongs to (set for individual HOIs/teachers). */
 export const ROUTE_MODULE: Record<string, string> = {
   "/students": "admissions",
   "/attendance": "academics",
@@ -16,7 +16,57 @@ export const ROUTE_MODULE: Record<string, string> = {
   "/assets": "assets",
 };
 
-/** Access rules saved for this Head of Institution by the super admin. */
+/** School-level modules the super admin can switch on/off per school. */
+export const SCHOOL_MODULES: { key: string; route: string; label: string }[] = [
+  { key: "dashboard", route: "/dashboard", label: "Dashboard" },
+  { key: "learners", route: "/students", label: "Learners" },
+  { key: "attendance", route: "/attendance", label: "Attendance" },
+  { key: "id_cards", route: "/id-cards", label: "ID Card Centre" },
+  { key: "exams_marks", route: "/marks", label: "Exams & Marks" },
+  { key: "exam_analytics", route: "/exams", label: "Exam Analytics" },
+  { key: "report_cards", route: "/reports", label: "Report Cards" },
+  { key: "promotions", route: "/promotions", label: "Promotions" },
+  { key: "fees_finance", route: "/fees", label: "Fees & Finance" },
+  { key: "library", route: "/library", label: "Library" },
+  { key: "assets", route: "/assets", label: "Assets" },
+  { key: "settings", route: "/settings", label: "Settings" },
+  { key: "users_schools", route: "/users", label: "Users & Schools" },
+];
+
+/** Disabled module keys + disabled grade ids for a school. Missing rows mean "enabled". */
+export type SchoolAccess = { disabledModules: string[]; disabledGrades: string[] };
+
+export async function fetchSchoolAccess(schoolId: string): Promise<SchoolAccess> {
+  const [m, g] = await Promise.all([
+    supabase.from("school_module_access").select("module_key, is_enabled").eq("school_id", schoolId),
+    supabase.from("school_grade_access").select("grade_id, is_enabled").eq("school_id", schoolId),
+  ]);
+  return {
+    disabledModules: (m.data ?? []).filter((r) => !r.is_enabled).map((r) => r.module_key),
+    disabledGrades: (g.data ?? []).filter((r) => !r.is_enabled).map((r) => r.grade_id),
+  };
+}
+
+export function useSchoolAccess(schoolId?: string | null) {
+  return useQuery({
+    queryKey: ["school-access", schoolId],
+    enabled: !!schoolId,
+    queryFn: () => fetchSchoolAccess(schoolId!),
+  });
+}
+
+/** Removes grades the super admin has switched off for this school (super admin still sees all). */
+export async function onlyEnabledGrades<T extends { id: string }>(
+  schoolId: string,
+  rows: T[],
+): Promise<T[]> {
+  const { data: isSuper } = await supabase.rpc("is_superadmin");
+  if (isSuper) return rows;
+  const { disabledGrades } = await fetchSchoolAccess(schoolId);
+  return rows.filter((r) => !disabledGrades.includes(r.id));
+}
+
+/** Access rules saved for this Head of Institution / teacher. */
 export function useHoiAccess(userId?: string | null) {
   return useQuery({
     queryKey: ["hoi-access", userId],
@@ -40,10 +90,13 @@ export function canUseRoute(
   isSuper: boolean,
   access: HoiAccess,
   roles: string[] = [],
+  school: SchoolAccess | null = null,
 ): boolean {
   if (isSuper) return true;
   if (route === "/users") return false;
   if (ADMIN_ROUTES.includes(route) && !roles.includes("hoi")) return false;
+  const schoolKey = SCHOOL_MODULES.find((m) => m.route === route)?.key;
+  if (schoolKey && school?.disabledModules.includes(schoolKey)) return false;
   const mod = ROUTE_MODULE[route];
   if (!mod) return true;
   const mods = access?.modules ?? null;
@@ -51,7 +104,7 @@ export function canUseRoute(
   return mods.includes(mod);
 }
 
-/** Grades of the school, already narrowed to the grades this user may work with. */
+/** Grades of the school, narrowed to those enabled for the school and granted to this user. */
 export function useAllowedGrades(
   schoolId?: string | null,
   isSuper = false,
@@ -68,8 +121,10 @@ export function useAllowedGrades(
         .eq("school_id", schoolId!)
         .order("level_order");
       const rows = data ?? [];
-      if (isSuper || !allowed || allowed.length === 0) return rows;
-      return rows.filter((g) => allowed.includes(g.id));
+      if (isSuper) return rows;
+      const enabled = await onlyEnabledGrades(schoolId!, rows);
+      if (!allowed || allowed.length === 0) return enabled;
+      return enabled.filter((g) => allowed.includes(g.id));
     },
   });
 }
