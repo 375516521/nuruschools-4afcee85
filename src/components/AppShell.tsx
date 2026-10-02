@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { canUseRoute, useHoiAccess } from "@/lib/access";
+import { canUseRoute, useHoiAccess, useSchoolAccess } from "@/lib/access";
 import { NURU } from "@/lib/nuru";
 
 const NAV = [
@@ -86,8 +86,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const roles = session?.roles ?? [];
   const isSuper = roles.includes("superadmin");
   const { data: access } = useHoiAccess(session?.user?.id ?? null);
+  const { data: schoolAccess } = useSchoolAccess(
+    (session?.profile as { school_id?: string } | null)?.school_id ?? null,
+  );
   const items = (isSuper ? [...NAV, ...SUPER_NAV] : NAV).filter((i) =>
-    canUseRoute(i.to, isSuper, access ?? null, roles),
+    canUseRoute(i.to, isSuper, access ?? null, roles, schoolAccess ?? null),
   );
   return (
     <nav className="flex flex-col gap-1">
