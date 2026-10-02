@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Printer, FileText, Trophy, Download } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { onlyEnabledGrades } from "@/lib/access";
 import { AppShell, useSession } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
