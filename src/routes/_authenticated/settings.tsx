@@ -272,13 +272,16 @@ function SettingsPage() {
     queryKey: ["grades", schoolId],
     enabled: !!schoolId,
     queryFn: async () =>
-      (
-        await supabase
-          .from("grades")
-          .select("id, name")
-          .eq("school_id", schoolId!)
-          .order("level_order")
-      ).data ?? [],
+      onlyEnabledGrades(
+        schoolId!,
+        (
+          await supabase
+            .from("grades")
+            .select("id, name")
+            .eq("school_id", schoolId!)
+            .order("level_order")
+        ).data ?? [],
+      ),
   });
 
   const createExam = useMutation({
