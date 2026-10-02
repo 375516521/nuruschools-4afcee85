@@ -374,7 +374,7 @@ function PromotionsInner() {
             </div>
             <Button
               className="w-full"
-              onClick={() => rollTerm.mutate(true)}
+              onClick={() => { if (window.confirm("Switch the whole school to this term?")) rollTerm.mutate(true); }}
               disabled={rollTerm.isPending}
             >
               {rollTerm.isPending ? (
@@ -387,7 +387,7 @@ function PromotionsInner() {
             <Button
               variant="secondary"
               className="w-full"
-              onClick={() => rollTerm.mutate(false)}
+              onClick={() => { if (window.confirm("Switch the whole school to this term?")) rollTerm.mutate(false); }}
               disabled={rollTerm.isPending}
             >
               Open term only
