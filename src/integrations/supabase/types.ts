@@ -1062,6 +1062,77 @@ export type Database = {
           },
         ]
       }
+      school_grade_access: {
+        Row: {
+          created_at: string
+          grade_id: string
+          id: string
+          is_enabled: boolean
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          grade_id: string
+          id?: string
+          is_enabled?: boolean
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          grade_id?: string
+          id?: string
+          is_enabled?: boolean
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_grade_access_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_grade_access_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_module_access: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          module_key: string
+          school_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          module_key: string
+          school_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          module_key?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_module_access_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schools: {
         Row: {
           county: string | null
