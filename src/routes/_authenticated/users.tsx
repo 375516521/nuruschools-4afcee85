@@ -522,6 +522,7 @@ function UsersPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+      <SchoolAccessDialog school={accessSchool} onClose={() => setAccessSchool(null)} />
     </AppShell>
   );
 }

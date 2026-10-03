@@ -55,15 +55,27 @@ export function useSchoolAccess(schoolId?: string | null) {
   });
 }
 
-/** Removes grades the super admin has switched off for this school (super admin still sees all). */
+/**
+ * Removes grades switched off for this school, then (for HOIs/teachers) keeps only the
+ * grades granted to the signed-in user. Super admin always sees everything.
+ */
 export async function onlyEnabledGrades<T extends { id: string }>(
   schoolId: string,
   rows: T[],
 ): Promise<T[]> {
   const { data: isSuper } = await supabase.rpc("is_superadmin");
   if (isSuper) return rows;
-  const { disabledGrades } = await fetchSchoolAccess(schoolId);
-  return rows.filter((r) => !disabledGrades.includes(r.id));
+  const { data: u } = await supabase.auth.getUser();
+  const [{ disabledGrades }, mine] = await Promise.all([
+    fetchSchoolAccess(schoolId),
+    u.user
+      ? supabase.from("hoi_access").select("grade_ids").eq("user_id", u.user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const granted = ((mine.data as { grade_ids?: string[] } | null)?.grade_ids ?? []) as string[];
+  return rows.filter(
+    (r) => !disabledGrades.includes(r.id) && (granted.length === 0 || granted.includes(r.id)),
+  );
 }
 
 /** Access rules saved for this Head of Institution / teacher. */
