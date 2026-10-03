@@ -1614,6 +1614,19 @@ export type Database = {
         Args: { _action: string; _entity?: string; _entity_id?: string }
         Returns: undefined
       }
+      parent_login: {
+        Args: { _adm_no: string; _guardian_phone: string }
+        Returns: {
+          adm_no: string
+          full_name: string
+          grade: string
+          id: string
+          photo_url: string
+          school_name: string
+          stream: string
+          student_id: string
+        }[]
+      }
       parent_lookup: {
         Args: {
           _adm_no?: string
