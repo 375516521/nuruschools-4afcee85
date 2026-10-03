@@ -36,8 +36,8 @@ function ParentPage() {
   const [phone, setPhone] = useState("");
 
   const lookup = useMutation({
-    mutationFn: async (args: { _adm_no?: string; _first_name?: string; _guardian_phone?: string }) => {
-      const { data, error } = await supabase.rpc("parent_lookup", args);
+    mutationFn: async (args: { _adm_no: string; _guardian_phone: string }) => {
+      const { data, error } = await supabase.rpc("parent_login", args);
       if (error) throw error;
       return (data ?? []) as Match[];
     },
@@ -95,40 +95,23 @@ function ParentPage() {
               <Button variant="ghost" className="mt-4 w-full" onClick={() => setMatches(null)}>Back</Button>
             </div>
           ) : (
-            <Tabs defaultValue="adm">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="adm">Admission No.</TabsTrigger>
-                <TabsTrigger value="phone">Name + Phone</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="adm">
-                <form className="space-y-4 pt-4" onSubmit={(e) => { e.preventDefault(); lookup.mutate({ _adm_no: adm.trim() }); }}>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="adm">Admission number</Label>
-                    <Input id="adm" required value={adm} onChange={(e) => setAdm(e.target.value)} placeholder="SDA-2026-0005" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={lookup.isPending}>
-                    {lookup.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Find my child
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="phone">
-                <form className="space-y-4 pt-4" onSubmit={(e) => { e.preventDefault(); lookup.mutate({ _first_name: firstName.trim(), _guardian_phone: phone.trim() }); }}>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fn">Learner's first name</Label>
-                    <Input id="fn" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ph">Your phone number</Label>
-                    <Input id="ph" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0722000111" />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={lookup.isPending}>
-                    {lookup.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Find my child
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); lookup.mutate({ _adm_no: adm.trim(), _guardian_phone: phone.trim() }); }}>
+              <div>
+                <h2 className="font-display font-semibold">Parent sign in</h2>
+                <p className="text-sm text-muted-foreground">Use your child&apos;s admission number and the phone number the school has for you.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="adm">Admission number</Label>
+                <Input id="adm" required value={adm} onChange={(e) => setAdm(e.target.value)} placeholder="SDA-2026-0005" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ph">Your phone number</Label>
+                <Input id="ph" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0722000111" />
+              </div>
+              <Button type="submit" className="w-full" disabled={lookup.isPending}>
+                {lookup.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Open my child&apos;s portal
+              </Button>
+            </form>
           )}
         </div>
 
