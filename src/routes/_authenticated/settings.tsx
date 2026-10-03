@@ -63,6 +63,21 @@ const GRADE_PLAN: { name: string; band: "pre_primary" | "primary" | "junior" | "
 ];
 
 function SettingsPage() {
+  const { data: s0 } = useSession();
+  const r0 = s0?.roles ?? [];
+  if (s0 && !r0.includes("superadmin") && !r0.includes("hoi")) {
+    return (
+      <AppShell title="Settings">
+        <div className="card-nuru p-5 text-sm text-muted-foreground">
+          Only the Head of Institution or super admin can open Settings.
+        </div>
+      </AppShell>
+    );
+  }
+  return <SettingsInner />;
+}
+
+function SettingsInner() {
   const { data: session } = useSession();
   const qc = useQueryClient();
   const profile = session?.profile as {
