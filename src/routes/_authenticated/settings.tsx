@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { onlyEnabledGrades } from "@/lib/access";
 import { AppShell, useSession, useActiveTerm } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -611,7 +612,15 @@ function SettingsInner() {
 
   return (
     <AppShell title="Settings" subtitle="School, term and account configuration">
-      <div className="grid gap-5 lg:grid-cols-2">
+      <Tabs defaultValue="school">
+        <TabsList className="flex h-auto flex-wrap justify-start">
+          <TabsTrigger value="school">School</TabsTrigger>
+          <TabsTrigger value="academic">Terms &amp; exams</TabsTrigger>
+          <TabsTrigger value="staff">Staff &amp; access</TabsTrigger>
+          <TabsTrigger value="account">My account</TabsTrigger>
+        </TabsList>
+        <TabsContent value="school" className="mt-4">
+          <div className="grid gap-5 lg:grid-cols-2">
         <section className="card-nuru p-5">
           <h2 className="flex items-center gap-2 font-display font-semibold">
             <School className="size-4 text-primary" /> Your school
@@ -657,106 +666,6 @@ function SettingsInner() {
             </div>
           ) : null}
         </section>
-
-        {isSuper ? (
-          <section className="card-nuru p-5">
-            <h2 className="flex items-center gap-2 font-display font-semibold">
-              <Plus className="size-4 text-primary" /> Create a school
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sets up PP1–Grade 12, one stream per grade, an academic year and three terms, then
-              links it to you.
-            </p>
-            <form
-              className="mt-3 space-y-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createSchool.mutate(new FormData(e.currentTarget));
-              }}
-            >
-              <Input name="name" placeholder="School name e.g. Malawa Primary School" required />
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Input name="code" placeholder="Code e.g. MPS" required />
-                <Input name="county" placeholder="County" />
-                <Input name="year" type="number" defaultValue={new Date().getFullYear()} required />
-              </div>
-              <Button type="submit" className="w-full" disabled={createSchool.isPending}>
-                {createSchool.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <School className="size-4" />
-                )}{" "}
-                Create school
-              </Button>
-            </form>
-          </section>
-        ) : null}
-
-        {isSuper ? (
-          <section className="card-nuru p-5">
-            <h2 className="flex items-center gap-2 font-display font-semibold">
-              <UserPlus className="size-4 text-primary" /> Assign a Head of Institution
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Creates a private login for one school. The HOI only ever sees that school&apos;s
-              learners, fees and results.
-            </p>
-            <form
-              className="mt-3 space-y-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createHoi.mutate(new FormData(e.currentTarget));
-              }}
-            >
-              <Select value={hoiSchool} onValueChange={setHoiSchool}>
-                <SelectTrigger>
-                  <SelectValue placeholder="School to assign" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(schools ?? []).map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name} ({s.school_code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input name="hoi_name" placeholder="HOI full name" required />
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input name="hoi_email" type="email" placeholder="HOI email (login)" required />
-                <Input name="hoi_phone" placeholder="Phone" />
-              </div>
-              <Input
-                name="hoi_password"
-                type="text"
-                minLength={8}
-                placeholder="Temporary password (min 8 characters)"
-                required
-              />
-              <Button type="submit" className="w-full" disabled={createHoi.isPending}>
-                {createHoi.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <UserPlus className="size-4" />
-                )}{" "}
-                Create HOI login
-              </Button>
-            </form>
-            {(staff ?? []).length ? (
-              <div className="mt-4 space-y-1.5 border-t border-border pt-3 text-sm">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Accounts on this school
-                </p>
-                {(staff ?? []).map((p) => (
-                  <div key={p.id} className="flex justify-between gap-3">
-                    <span className="font-medium">{p.full_name || "—"}</span>
-                    <span className="truncate text-muted-foreground">{p.email}</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
         {schoolId && isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
@@ -838,7 +747,66 @@ function SettingsInner() {
             </form>
           </section>
         ) : null}
-
+        {schoolId && isAdmin ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <Layers className="size-4 text-primary" /> Streams per class
+            </h2>
+            <form
+              className="mt-3 space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                addStream.mutate(new FormData(e.currentTarget));
+                e.currentTarget.reset();
+              }}
+            >
+              <Select value={streamGrade} onValueChange={setStreamGrade}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(grades ?? []).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Input name="stream_name" placeholder="Stream name e.g. North, Blue, East" />
+                <Button type="submit" disabled={addStream.isPending}>
+                  {addStream.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Plus className="size-4" />
+                  )}{" "}
+                  Add
+                </Button>
+              </div>
+            </form>
+            <div className="mt-4 max-h-56 space-y-1.5 overflow-y-auto border-t border-border pt-3 text-sm">
+              {(streams ?? []).length === 0 ? (
+                <p className="text-muted-foreground">No streams yet.</p>
+              ) : (
+                (streams ?? []).map((st) => (
+                  <div key={st.id} className="flex items-center justify-between gap-3">
+                    <span className="font-medium">
+                      {(st.grades as { name?: string } | null)?.name} · {st.name}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeStream.mutate(st.id)}
+                      aria-label={`Remove ${st.name}`}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        ) : null}
         {schoolId && isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
@@ -910,7 +878,10 @@ function SettingsInner() {
             </div>
           </section>
         ) : null}
-
+          </div>
+        </TabsContent>
+        <TabsContent value="academic" className="mt-4">
+          <div className="grid gap-5 lg:grid-cols-2">
         {schoolId && isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
@@ -962,7 +933,6 @@ function SettingsInner() {
             </div>
           </section>
         ) : null}
-
         <section className="card-nuru p-5">
           <h2 className="font-display font-semibold">Exams for the active term</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -1009,111 +979,124 @@ function SettingsInner() {
             </div>
           </form>
         </section>
-
-        {schoolId && isAdmin ? (
+          </div>
+        </TabsContent>
+        <TabsContent value="staff" className="mt-4">
+          <div className="grid gap-5 lg:grid-cols-2">
+        <section className="card-nuru p-5 lg:col-span-2">
+          <h2 className="font-display font-semibold">Who can do what</h2>
+          <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-lg border border-border p-3">
+              <p className="font-semibold">Super admin</p>
+              <p className="mt-1 text-muted-foreground">Creates schools and Heads of Institution, and switches modules and classes on or off per school (Users &amp; Schools → Manage HOI Access).</p>
+            </div>
+            <div className="rounded-lg border border-border p-3">
+              <p className="font-semibold">Head of Institution</p>
+              <p className="mt-1 text-muted-foreground">Runs one school: profile, terms, exams, streams and fees. Creates teacher logins and picks each teacher&apos;s classes and modules.</p>
+            </div>
+            <div className="rounded-lg border border-border p-3">
+              <p className="font-semibold">Teacher</p>
+              <p className="mt-1 text-muted-foreground">Signs in with the email or username and password given by the Head of Institution, and sees only the classes and modules assigned.</p>
+            </div>
+          </div>
+        </section>
+        {isSuper ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
-              <Layers className="size-4 text-primary" /> Streams per class
+              <Plus className="size-4 text-primary" /> Create a school
             </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sets up PP1–Grade 12, one stream per grade, an academic year and three terms, then
+              links it to you.
+            </p>
             <form
               className="mt-3 space-y-2"
               onSubmit={(e) => {
                 e.preventDefault();
-                addStream.mutate(new FormData(e.currentTarget));
-                e.currentTarget.reset();
+                createSchool.mutate(new FormData(e.currentTarget));
               }}
             >
-              <Select value={streamGrade} onValueChange={setStreamGrade}>
+              <Input name="name" placeholder="School name e.g. Malawa Primary School" required />
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Input name="code" placeholder="Code e.g. MPS" required />
+                <Input name="county" placeholder="County" />
+                <Input name="year" type="number" defaultValue={new Date().getFullYear()} required />
+              </div>
+              <Button type="submit" className="w-full" disabled={createSchool.isPending}>
+                {createSchool.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <School className="size-4" />
+                )}{" "}
+                Create school
+              </Button>
+            </form>
+          </section>
+        ) : null}
+        {isSuper ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <UserPlus className="size-4 text-primary" /> Assign a Head of Institution
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Creates a private login for one school. The HOI only ever sees that school&apos;s
+              learners, fees and results.
+            </p>
+            <form
+              className="mt-3 space-y-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                createHoi.mutate(new FormData(e.currentTarget));
+              }}
+            >
+              <Select value={hoiSchool} onValueChange={setHoiSchool}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Grade" />
+                  <SelectValue placeholder="School to assign" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(grades ?? []).map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}
+                  {(schools ?? []).map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} ({s.school_code})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex gap-2">
-                <Input name="stream_name" placeholder="Stream name e.g. North, Blue, East" />
-                <Button type="submit" disabled={addStream.isPending}>
-                  {addStream.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <Plus className="size-4" />
-                  )}{" "}
-                  Add
-                </Button>
+              <Input name="hoi_name" placeholder="HOI full name" required />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input name="hoi_email" type="email" placeholder="HOI email (login)" required />
+                <Input name="hoi_phone" placeholder="Phone" />
               </div>
-            </form>
-            <div className="mt-4 max-h-56 space-y-1.5 overflow-y-auto border-t border-border pt-3 text-sm">
-              {(streams ?? []).length === 0 ? (
-                <p className="text-muted-foreground">No streams yet.</p>
-              ) : (
-                (streams ?? []).map((st) => (
-                  <div key={st.id} className="flex items-center justify-between gap-3">
-                    <span className="font-medium">
-                      {(st.grades as { name?: string } | null)?.name} · {st.name}
-                    </span>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => removeStream.mutate(st.id)}
-                      aria-label={`Remove ${st.name}`}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-        ) : null}
-
-        {profile?.id ? (
-          <section className="card-nuru p-5">
-            <h2 className="flex items-center gap-2 font-display font-semibold">
-              <PenLine className="size-4 text-primary" /> My digital signature
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Upload a clear photo or scan of your signature. It prints on report cards and merit
-              lists next to your name.
-            </p>
-            <div className="mt-3 flex items-center gap-4">
-              {sigData ?? myProfile?.signature_url ? (
-                <img
-                  src={(sigData ?? myProfile?.signature_url)!}
-                  alt="Signature preview"
-                  className="h-12 object-contain"
-                />
-              ) : null}
-              <input
-                type="file"
-                accept="image/*"
-                className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    setSigData(await fileToDataUrl(f, 420));
-                  } catch (err) {
-                    toast.error((err as Error).message);
-                  }
-                }}
+              <Input
+                name="hoi_password"
+                type="text"
+                minLength={8}
+                placeholder="Temporary password (min 8 characters)"
+                required
               />
-            </div>
-            <Button
-              className="mt-3 w-full"
-              onClick={() => saveSignature.mutate()}
-              disabled={saveSignature.isPending || !sigData}
-            >
-              {saveSignature.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Save
-              signature
-            </Button>
+              <Button type="submit" className="w-full" disabled={createHoi.isPending}>
+                {createHoi.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <UserPlus className="size-4" />
+                )}{" "}
+                Create HOI login
+              </Button>
+            </form>
+            {(staff ?? []).length ? (
+              <div className="mt-4 space-y-1.5 border-t border-border pt-3 text-sm">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Accounts on this school
+                </p>
+                {(staff ?? []).map((p) => (
+                  <div key={p.id} className="flex justify-between gap-3">
+                    <span className="font-medium">{p.full_name || "—"}</span>
+                    <span className="truncate text-muted-foreground">{p.email}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </section>
         ) : null}
-
         {schoolId && isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
@@ -1213,7 +1196,6 @@ function SettingsInner() {
             </form>
           </section>
         ) : null}
-
         {isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
@@ -1283,14 +1265,61 @@ function SettingsInner() {
             </div>
           </section>
         ) : null}
-
-        <section className="card-nuru p-5 lg:col-span-2">
+          </div>
+        </TabsContent>
+        <TabsContent value="account" className="mt-4">
+          <div className="grid gap-5 lg:grid-cols-2">
+        {profile?.id ? (
+          <section className="card-nuru p-5">
+            <h2 className="flex items-center gap-2 font-display font-semibold">
+              <PenLine className="size-4 text-primary" /> My digital signature
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Upload a clear photo or scan of your signature. It prints on report cards and merit
+              lists next to your name.
+            </p>
+            <div className="mt-3 flex items-center gap-4">
+              {sigData ?? myProfile?.signature_url ? (
+                <img
+                  src={(sigData ?? myProfile?.signature_url)!}
+                  alt="Signature preview"
+                  className="h-12 object-contain"
+                />
+              ) : null}
+              <input
+                type="file"
+                accept="image/*"
+                className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  try {
+                    setSigData(await fileToDataUrl(f, 420));
+                  } catch (err) {
+                    toast.error((err as Error).message);
+                  }
+                }}
+              />
+            </div>
+            <Button
+              className="mt-3 w-full"
+              onClick={() => saveSignature.mutate()}
+              disabled={saveSignature.isPending || !sigData}
+            >
+              {saveSignature.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Save
+              signature
+            </Button>
+          </section>
+        ) : null}
+        <section className="card-nuru p-5">
           <h2 className="font-display font-semibold">Support</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             WhatsApp {NURU.whatsapp} · Email {NURU.email}
           </p>
         </section>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }
