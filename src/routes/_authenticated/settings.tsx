@@ -1199,7 +1199,7 @@ function SettingsInner() {
         {isAdmin ? (
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
-              <ShieldCheck className="size-4 text-primary" /> Staff access
+              <ShieldCheck className="size-4 text-primary" /> Change a staff member's classes &amp; modules
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {isSuper
