@@ -158,7 +158,13 @@ function StudentsPage() {
         .eq("school_id", schoolId!)
         .order("adm_no");
       if (status !== "all") query = query.eq("status", status as "active");
-      return ((await query).data ?? []) as unknown as Learner[];
+      const rows = ((await query).data ?? []) as unknown as Learner[];
+      const { data: allGrades } = await supabase.from("grades").select("id").eq("school_id", schoolId!);
+      const allowed = new Set((await onlyEnabledGrades(schoolId!, allGrades ?? [])).map((g) => g.id));
+      return rows.filter((r) => {
+        const gid = (r as { grade_id?: string | null }).grade_id;
+        return !gid || allowed.has(gid);
+      });
     },
   });
 
