@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/select";
 import { NURU } from "@/lib/nuru";
 import { createHoiAccount } from "@/lib/school-admin.functions";
-import { createTeacherAccount } from "@/lib/staff-admin.functions";
 import { TEACHER_MODULES } from "@/lib/access";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -108,7 +107,6 @@ function SettingsInner() {
   const [hoiSchool, setHoiSchool] = useState("");
   const [subjectGrade, setSubjectGrade] = useState("all");
   const callCreateHoi = useServerFn(createHoiAccount);
-  const callCreateTeacher = useServerFn(createTeacherAccount);
   const [logoData, setLogoData] = useState<string | null>(null);
   const [sigData, setSigData] = useState<string | null>(null);
   const [streamGrade, setStreamGrade] = useState("");
@@ -500,41 +498,6 @@ function SettingsInner() {
     onSuccess: () => {
       toast.success("Stream removed.");
       void qc.invalidateQueries({ queryKey: ["settings-streams"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  // ---- Teacher accounts ---------------------------------------------------
-  const createTeacher = useMutation({
-    mutationFn: async (form: FormData) => {
-      const target = isSuper ? hoiSchool || schoolId : schoolId;
-      if (!target) throw new Error("Choose the school this teacher belongs to.");
-      if (teacherGrades.length === 0)
-        throw new Error("Select at least one grade this teacher teaches.");
-      if (teacherSubjects.length === 0)
-        throw new Error("Select at least one learning area this teacher teaches.");
-      if (teacherModules.length === 0)
-        throw new Error("Select at least one module this teacher may open.");
-      return callCreateTeacher({
-        data: {
-          school_id: target,
-          full_name: String(form.get("t_name") ?? "").trim(),
-          email: String(form.get("t_email") ?? "").trim(),
-          password: String(form.get("t_password") ?? ""),
-          phone: String(form.get("t_phone") ?? "").trim() || null,
-          tsc_number: String(form.get("t_tsc") ?? "").trim() || null,
-          subject_ids: teacherSubjects,
-          grade_ids: teacherGrades,
-          modules: teacherModules,
-        },
-      });
-    },
-    onSuccess: (r) => {
-      toast.success(`Teacher login ready for ${r.email}.`);
-      setTeacherSubjects([]);
-      setTeacherGrades([]);
-      setTeacherModules([]);
-      void qc.invalidateQueries({ queryKey: ["school-staff"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
