@@ -146,3 +146,28 @@ export function useAllowedGrades(
     },
   });
 }
+
+/**
+ * Learning areas a signed-in user may enter marks for in one grade. Super admin, HOI and the
+ * class teacher of that grade see every learning area; other teachers only those assigned to them.
+ */
+export async function onlyMySubjects<T extends { id: string }>(gradeId: string, rows: T[]): Promise<T[]> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return rows;
+  const [{ data: roles }, { data: isClassTeacher }] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", u.user.id),
+    supabase.rpc("is_class_teacher", { _grade_id: gradeId }),
+  ]);
+  const r = (roles ?? []).map((x) => x.role as string);
+  if (r.includes("superadmin") || r.includes("hoi") || isClassTeacher) return rows;
+  const { data: t } = await supabase.from("teachers").select("id").eq("user_id", u.user.id).maybeSingle();
+  if (!t) return rows;
+  const { data: ts } = await supabase
+    .from("teacher_subjects")
+    .select("subject_id")
+    .eq("teacher_id", t.id)
+    .eq("grade_id", gradeId);
+  const ids = (ts ?? []).map((x) => x.subject_id);
+  if (ids.length === 0) return rows;
+  return rows.filter((s) => ids.includes(s.id));
+}

@@ -5,7 +5,7 @@ import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { onlyEnabledGrades } from "@/lib/access";
+import { onlyEnabledGrades , onlyMySubjects } from "@/lib/access";
 import { AppShell, useSession, useActiveTerm } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,9 +43,12 @@ function MarksPage() {
   });
 
   const { data: subjects } = useQuery({
-    queryKey: ["subjects", schoolId],
+    queryKey: ["subjects", schoolId, gradeId],
     enabled: !!schoolId,
-    queryFn: async () => (await supabase.from("subjects").select("*").eq("school_id", schoolId!).order("name")).data ?? [],
+    queryFn: async () => {
+      const rows = (await supabase.from("subjects").select("*").eq("school_id", schoolId!).order("name")).data ?? [];
+      return gradeId ? onlyMySubjects(gradeId, rows) : rows;
+    },
   });
 
   const { data: students } = useQuery({
