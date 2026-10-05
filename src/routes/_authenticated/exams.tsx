@@ -21,7 +21,7 @@ import {
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 import { scoreToLevel } from "@/lib/nuru";
 import { DEFAULT_SCALE, bandFor, parseScale, type GradeBand } from "@/lib/grading";
-import { useAllowedGrades, useHoiAccess } from "@/lib/access";
+import { useAllowedGrades, useHoiAccess , onlyMySubjects } from "@/lib/access";
 import { logAudit } from "@/lib/audit";
 
 export const Route = createFileRoute("/_authenticated/exams")({
@@ -142,14 +142,17 @@ function ExamsPage() {
     queryKey: ["grid-subjects", schoolId, gradeId],
     enabled: !!schoolId && !!gradeId,
     queryFn: async () =>
-      (
-        await supabase
-          .from("subjects")
-          .select("id, name")
-          .eq("school_id", schoolId!)
-          .or(`grade_id.eq.${gradeId},grade_id.is.null`)
-          .order("name")
-      ).data ?? [],
+      onlyMySubjects(
+        gradeId,
+        (
+          await supabase
+            .from("subjects")
+            .select("id, name")
+            .eq("school_id", schoolId!)
+            .or(`grade_id.eq.${gradeId},grade_id.is.null`)
+            .order("name")
+        ).data ?? [],
+      ),
   });
 
   const { data: examMarks } = useQuery({

@@ -285,6 +285,55 @@ export type Database = {
           },
         ]
       }
+      class_teachers: {
+        Row: {
+          created_at: string
+          grade_id: string
+          id: string
+          school_id: string
+          stream_id: string | null
+          teacher_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grade_id: string
+          id?: string
+          school_id: string
+          stream_id?: string | null
+          teacher_user_id: string
+        }
+        Update: {
+          created_at?: string
+          grade_id?: string
+          id?: string
+          school_id?: string
+          stream_id?: string | null
+          teacher_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_teachers_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_teachers_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_teachers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competency_scores: {
         Row: {
           competency: string
@@ -1608,6 +1657,7 @@ export type Database = {
       }
       hoi_can_access_grade: { Args: { _grade_id: string }; Returns: boolean }
       in_my_school: { Args: { _school: string }; Returns: boolean }
+      is_class_teacher: { Args: { _grade_id: string }; Returns: boolean }
       is_school_admin: { Args: { _school: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       log_audit: {

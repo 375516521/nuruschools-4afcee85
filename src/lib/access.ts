@@ -33,6 +33,11 @@ export const SCHOOL_MODULES: { key: string; route: string; label: string }[] = [
   { key: "users_schools", route: "/users", label: "Users & Schools" },
 ];
 
+/** Modules a super admin or HOI can hand to a teacher (admin-only pages excluded). */
+export const TEACHER_MODULES = SCHOOL_MODULES.filter(
+  (m) => !["dashboard", "settings", "users_schools", "promotions"].includes(m.key),
+);
+
 /** Disabled module keys + disabled grade ids for a school. Missing rows mean "enabled". */
 export type SchoolAccess = { disabledModules: string[]; disabledGrades: string[] };
 
@@ -95,7 +100,7 @@ export function useHoiAccess(userId?: string | null) {
 }
 
 /** Routes reserved for school administrators (super admin or Head of Institution). */
-export const ADMIN_ROUTES = ["/promotions", "/settings"];
+export const ADMIN_ROUTES = ["/promotions", "/settings", "/teachers"];
 
 export function canUseRoute(
   route: string,
@@ -110,10 +115,11 @@ export function canUseRoute(
   const schoolKey = SCHOOL_MODULES.find((m) => m.route === route)?.key;
   if (schoolKey && school?.disabledModules.includes(schoolKey)) return false;
   const mod = ROUTE_MODULE[route];
-  if (!mod) return true;
+  if (!mod && !schoolKey) return true;
+  if (route === "/dashboard") return true;
   const mods = access?.modules ?? null;
   if (!mods || mods.length === 0) return true; // no restriction saved yet
-  return mods.includes(mod);
+  return (!!mod && mods.includes(mod)) || (!!schoolKey && mods.includes(schoolKey));
 }
 
 /** Grades of the school, narrowed to those enabled for the school and granted to this user. */
@@ -139,4 +145,29 @@ export function useAllowedGrades(
       return enabled.filter((g) => allowed.includes(g.id));
     },
   });
+}
+
+/**
+ * Learning areas a signed-in user may enter marks for in one grade. Super admin, HOI and the
+ * class teacher of that grade see every learning area; other teachers only those assigned to them.
+ */
+export async function onlyMySubjects<T extends { id: string }>(gradeId: string, rows: T[]): Promise<T[]> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return rows;
+  const [{ data: roles }, { data: isClassTeacher }] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", u.user.id),
+    supabase.rpc("is_class_teacher", { _grade_id: gradeId }),
+  ]);
+  const r = (roles ?? []).map((x) => x.role as string);
+  if (r.includes("superadmin") || r.includes("hoi") || isClassTeacher) return rows;
+  const { data: t } = await supabase.from("teachers").select("id").eq("user_id", u.user.id).maybeSingle();
+  if (!t) return rows;
+  const { data: ts } = await supabase
+    .from("teacher_subjects")
+    .select("subject_id")
+    .eq("teacher_id", t.id)
+    .eq("grade_id", gradeId);
+  const ids = (ts ?? []).map((x) => x.subject_id);
+  if (ids.length === 0) return rows;
+  return rows.filter((s) => ids.includes(s.id));
 }
