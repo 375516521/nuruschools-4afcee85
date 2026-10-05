@@ -33,6 +33,11 @@ export const SCHOOL_MODULES: { key: string; route: string; label: string }[] = [
   { key: "users_schools", route: "/users", label: "Users & Schools" },
 ];
 
+/** Modules a super admin or HOI can hand to a teacher (admin-only pages excluded). */
+export const TEACHER_MODULES = SCHOOL_MODULES.filter(
+  (m) => !["dashboard", "settings", "users_schools", "promotions"].includes(m.key),
+);
+
 /** Disabled module keys + disabled grade ids for a school. Missing rows mean "enabled". */
 export type SchoolAccess = { disabledModules: string[]; disabledGrades: string[] };
 
@@ -95,7 +100,7 @@ export function useHoiAccess(userId?: string | null) {
 }
 
 /** Routes reserved for school administrators (super admin or Head of Institution). */
-export const ADMIN_ROUTES = ["/promotions", "/settings"];
+export const ADMIN_ROUTES = ["/promotions", "/settings", "/teachers"];
 
 export function canUseRoute(
   route: string,
@@ -110,10 +115,11 @@ export function canUseRoute(
   const schoolKey = SCHOOL_MODULES.find((m) => m.route === route)?.key;
   if (schoolKey && school?.disabledModules.includes(schoolKey)) return false;
   const mod = ROUTE_MODULE[route];
-  if (!mod) return true;
+  if (!mod && !schoolKey) return true;
+  if (route === "/dashboard") return true;
   const mods = access?.modules ?? null;
   if (!mods || mods.length === 0) return true; // no restriction saved yet
-  return mods.includes(mod);
+  return (!!mod && mods.includes(mod)) || (!!schoolKey && mods.includes(schoolKey));
 }
 
 /** Grades of the school, narrowed to those enabled for the school and granted to this user. */

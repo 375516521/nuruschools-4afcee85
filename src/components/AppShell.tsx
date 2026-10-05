@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, IdCard, ClipboardList, Wallet, Settings,
   LogOut, GraduationCap, Menu, FileText, ShieldCheck,
-  CalendarCheck, BookOpen, Boxes, BarChart3,
+  CalendarCheck, BookOpen, Boxes, BarChart3, UserCog,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -33,12 +33,13 @@ const NAV = [
   { to: "/library", label: "Library", icon: BookOpen },
   { to: "/assets", label: "Assets", icon: Boxes },
   { to: "/promotions", label: "Promotions", icon: GraduationCap },
+  { to: "/teachers", label: "Teachers", icon: UserCog },
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 
 const SUPER_NAV = [
-  { to: "/users", label: "Users & Schools", icon: ShieldCheck },
+  { to: "/users", label: "Users & Accounts", icon: ShieldCheck },
 ] as const;
 
 
