@@ -22,6 +22,13 @@
       "when": 1791048469826,
       "tag": "0002_parent_phone_login",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791205033388,
+      "tag": "0003_class_teachers",
+      "breakpoints": true
     }
   ]
 }
