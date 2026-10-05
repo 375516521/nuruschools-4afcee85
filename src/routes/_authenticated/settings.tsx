@@ -110,12 +110,9 @@ function SettingsInner() {
   const [logoData, setLogoData] = useState<string | null>(null);
   const [sigData, setSigData] = useState<string | null>(null);
   const [streamGrade, setStreamGrade] = useState("");
-  const [teacherGrades, setTeacherGrades] = useState<string[]>([]);
-  const [teacherSubjects, setTeacherSubjects] = useState<string[]>([]);
   const [accessUser, setAccessUser] = useState("");
   const [accessGrades, setAccessGrades] = useState<string[]>([]);
   const [accessModules, setAccessModules] = useState<string[]>([]);
-  const [teacherModules, setTeacherModules] = useState<string[]>([]);
 
   const { data: schools } = useQuery({
     queryKey: ["all-schools"],
