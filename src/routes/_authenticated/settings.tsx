@@ -36,11 +36,13 @@ import {
 import { NURU } from "@/lib/nuru";
 import { createHoiAccount } from "@/lib/school-admin.functions";
 import { createTeacherAccount } from "@/lib/staff-admin.functions";
+import { TEACHER_MODULES } from "@/lib/access";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
 /** Module keys must match ROUTE_MODULE in src/lib/access.ts. */
-const MODULES = ["admissions", "academics", "fees", "library", "assets"] as const;
+const MODULES = TEACHER_MODULES.map((m) => m.key);
+const moduleLabel = (k: string) => TEACHER_MODULES.find((m) => m.key === k)?.label ?? k;
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -1103,97 +1105,12 @@ function SettingsInner() {
               <Users className="size-4 text-primary" /> Teacher accounts
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create a teacher login and link them to the learning areas they teach.
+              Create teachers, choose their classes, learning areas and modules, and pick class
+              teachers on the Teachers page.
             </p>
-            <form
-              className="mt-3 space-y-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                createTeacher.mutate(new FormData(e.currentTarget));
-              }}
-            >
-              <Input name="t_name" placeholder="Teacher full name" required />
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input name="t_email" type="email" placeholder="Email (login)" required />
-                <Input name="t_phone" placeholder="Phone" />
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Input name="t_tsc" placeholder="TSC number" />
-                <Input
-                  name="t_password"
-                  minLength={8}
-                  placeholder="Temporary password"
-                  required
-                />
-              </div>
-              <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
-                <p className="text-xs tracking-wide uppercase text-muted-foreground">
-                  Grades taught (required)
-                </p>
-                {(grades ?? []).map((g) => (
-                  <label key={g.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={teacherGrades.includes(g.id)}
-                      onCheckedChange={(v) =>
-                        setTeacherGrades((prev) =>
-                          v ? [...prev, g.id] : prev.filter((x) => x !== g.id),
-                        )
-                      }
-                    />
-                    {g.name}
-                  </label>
-                ))}
-              </div>
-              <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Learning areas taught
-                </p>
-                {(subjects ?? []).map((sub) => (
-                  <label key={sub.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={teacherSubjects.includes(sub.id)}
-                      onCheckedChange={(v) =>
-                        setTeacherSubjects((prev) =>
-                          v ? [...prev, sub.id] : prev.filter((x) => x !== sub.id),
-                        )
-                      }
-                    />
-                    {sub.name}
-                  </label>
-                ))}
-                {(subjects ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Add learning areas first.</p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5 rounded-lg border border-border p-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Modules they may open (required)
-                </p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {MODULES.map((m) => (
-                    <label key={m} className="flex items-center gap-2 text-sm capitalize">
-                      <Checkbox
-                        checked={teacherModules.includes(m)}
-                        onCheckedChange={(v) =>
-                          setTeacherModules((prev) =>
-                            v ? [...prev, m] : prev.filter((x) => x !== m),
-                          )
-                        }
-                      />
-                      {m}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <Button type="submit" className="w-full" disabled={createTeacher.isPending}>
-                {createTeacher.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <UserPlus className="size-4" />
-                )}{" "}
-                Create teacher login
-              </Button>
-            </form>
+            <Button asChild className="mt-3 w-full">
+              <Link to="/teachers">Open Teachers</Link>
+            </Button>
           </section>
         ) : null}
         {isAdmin ? (
@@ -1249,7 +1166,7 @@ function SettingsInner() {
                           )
                         }
                       />
-                      {m.replace("-", " ")}
+                      {moduleLabel(m)}
                     </label>
                   ))}
                 </div>
