@@ -115,5 +115,8 @@ export const createHoiAccount = createServerFn({ method: "POST" })
       entity_id: userId,
     });
 
-    return { ok: true as const, email, username };
+    const { verifyLogin } = await import("./verify-login.server");
+    const verified = await verifyLogin(email, data.password);
+    if (!verified) throw new Error("Account saved, but the test sign-in failed. Please try again.");
+    return { ok: true as const, email, username, verified };
   });

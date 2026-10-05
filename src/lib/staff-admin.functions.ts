@@ -20,6 +20,8 @@ const teacherSchema = z.object({
   subject_ids: z.array(z.string().uuid()).max(60).default([]),
   grade_ids: z.array(z.string().uuid()).max(20).default([]),
   modules: z.array(z.string().max(30)).max(20).default([]),
+  class_teacher_grade_id: z.string().uuid().optional().nullable(),
+  class_teacher_stream_id: z.string().uuid().optional().nullable(),
 });
 
 /**
@@ -159,6 +161,27 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
     }
 
 
+    // Class teacher: owns one class, which is always part of their grade access.
+    if (data.class_teacher_grade_id) {
+      if (!data.grade_ids.includes(data.class_teacher_grade_id))
+        data.grade_ids = [...data.grade_ids, data.class_teacher_grade_id];
+      let del = supabaseAdmin
+        .from("class_teachers")
+        .delete()
+        .eq("grade_id", data.class_teacher_grade_id);
+      del = data.class_teacher_stream_id
+        ? del.eq("stream_id", data.class_teacher_stream_id)
+        : del.is("stream_id", null);
+      await del;
+      const { error: cErr } = await supabaseAdmin.from("class_teachers").insert({
+        school_id: data.school_id,
+        grade_id: data.class_teacher_grade_id,
+        stream_id: data.class_teacher_stream_id ?? null,
+        teacher_user_id: userId,
+      });
+      if (cErr) throw new Error(cErr.message);
+    }
+
     // Grade + module access for this teacher (what they may open in the app).
     if (data.modules.length && data.grade_ids.length) {
       const { error: aErr } = await supabaseAdmin.from("hoi_access").upsert(
@@ -181,5 +204,8 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
       entity_id: teacher.id,
     });
 
-    return { ok: true as const, email, username };
+    const { verifyLogin } = await import("./verify-login.server");
+    const verified = await verifyLogin(email, data.password);
+    if (!verified) throw new Error("Account saved, but the test sign-in failed. Please try again.");
+    return { ok: true as const, email, username, verified };
   });
