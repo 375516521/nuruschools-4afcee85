@@ -140,9 +140,10 @@ function ReportsPage() {
     queryKey: ["signatories", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
-      const [profileRes, rolesRes] = await Promise.all([
+      const [profileRes, rolesRes, ctRes] = await Promise.all([
         supabase.from("profiles").select("id, full_name, signature_url").eq("school_id", schoolId!),
         supabase.from("user_roles").select("user_id, role").eq("school_id", schoolId!),
+        supabase.from("class_teachers").select("grade_id, stream_id, teacher_user_id").eq("school_id", schoolId!),
       ]);
       const hoiIds = new Set(
         (rolesRes.data ?? []).filter((r) => r.role === "hoi").map((r) => r.user_id),
@@ -151,6 +152,14 @@ function ReportsPage() {
       return {
         hoi: profiles.find((p) => hoiIds.has(p.id) && p.signature_url) ?? null,
         me: profiles.find((p) => p.id === session?.user?.id) ?? null,
+        classTeacher: (gid?: string | null, sid?: string | null) => {
+          const rows = (ctRes.data ?? []).filter((c) => c.grade_id === gid);
+          const hit =
+            rows.find((c) => sid && c.stream_id === sid) ??
+            rows.find((c) => !c.stream_id) ??
+            rows[0];
+          return hit ? (profiles.find((p) => p.id === hit.teacher_user_id) ?? null) : null;
+        },
       };
     },
   });
@@ -404,8 +413,8 @@ function ReportsPage() {
           <div className="mt-8 flex items-end justify-between gap-6">
             <SignatureBlock
               label="Class teacher"
-              name={signatories?.me?.full_name}
-              url={signatories?.me?.signature_url}
+              name={(signatories?.classTeacher(gradeId) ?? signatories?.me)?.full_name}
+              url={(signatories?.classTeacher(gradeId) ?? signatories?.me)?.signature_url}
             />
             <SignatureBlock
               label="Head of Institution"
@@ -536,8 +545,8 @@ function ReportsPage() {
                   <div className="mt-5 flex items-end justify-between gap-6">
                     <SignatureBlock
                       label="Class teacher"
-                      name={signatories?.me?.full_name}
-                      url={signatories?.me?.signature_url}
+                      name={(signatories?.classTeacher(gradeId, (s as { stream_id?: string | null }).stream_id) ?? signatories?.me)?.full_name}
+                      url={(signatories?.classTeacher(gradeId, (s as { stream_id?: string | null }).stream_id) ?? signatories?.me)?.signature_url}
                     />
                     <SignatureBlock
                       label="Head of Institution"
