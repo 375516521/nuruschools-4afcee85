@@ -111,8 +111,8 @@ function Landing() {
       <footer className="border-t border-border bg-secondary/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center">
           <p className="mr-auto font-display font-semibold">{NURU.name}</p>
-          <a href={NURU.whatsappLink} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-            <MessageCircle className="size-4" /> {NURU.whatsapp}
+          <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+            <MessageCircle className="size-4" /> {NURU.email}
           </a>
           <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
             <Mail className="size-4" /> {NURU.email}

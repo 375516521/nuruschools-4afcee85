@@ -85,7 +85,7 @@ export function SchoolLetterhead({
 export function DocFooter({ note }: { note?: string }) {
   return (
     <p className="mt-4 border-t border-dashed border-border pt-2 text-[10px] text-muted-foreground">
-      {note ? `${note} · ` : ""}Powered by {NURU.name} · {NURU.whatsapp} · {NURU.email}
+      {note ? `${note} · ` : ""}Powered by {NURU.name} · {NURU.email}
     </p>
   );
 }

@@ -90,7 +90,7 @@ function VerifyPage() {
 
         <div className="mt-5 text-center">
           <Button asChild variant="outline" size="sm"><Link to="/parent">Parent portal</Link></Button>
-          <p className="mt-3 text-xs text-muted-foreground">Report a suspicious card: {NURU.whatsapp}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Report a suspicious card: {NURU.email}</p>
         </div>
       </div>
     </div>

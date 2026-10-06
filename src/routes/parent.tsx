@@ -116,7 +116,7 @@ function ParentPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          No password needed. USSD coming soon: dial *483*SCHOOLCODE#.<br />Help: {NURU.whatsapp}
+          No password needed. USSD coming soon: dial *483*SCHOOLCODE#.<br />Help: {NURU.email}
         </p>
       </div>
     </div>
@@ -170,7 +170,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
                 term's results, report card and ID card. Payments reflect here immediately once the school records them.
               </p>
               <Button className="mt-3" variant="outline" asChild>
-                <a href={NURU.whatsappLink} target="_blank" rel="noreferrer">Contact the school on WhatsApp</a>
+                <a href={`mailto:${NURU.email}`} target="_blank" rel="noreferrer">Contact support by email</a>
               </Button>
             </div>
           ) : results.length === 0 ? (
@@ -196,7 +196,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
           </div>
         ) : null}
 
-        <p className="pb-6 text-center text-xs text-muted-foreground">Questions? WhatsApp the school on {NURU.whatsapp}</p>
+        <p className="pb-6 text-center text-xs text-muted-foreground">Questions? Email {NURU.email}</p>
       </main>
     </div>
   );

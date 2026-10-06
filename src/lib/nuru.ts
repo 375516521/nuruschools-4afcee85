@@ -1,8 +1,6 @@
 export const NURU = {
   name: "Fanisi Digital Solutions",
   tagline: "The complete CBE school management system for Kenyan schools",
-  whatsapp: "+254745939344",
-  whatsappLink: "https://wa.me/254745939344",
   email: "fanisitechsoftwares@gmail.com",
 } as const;
 

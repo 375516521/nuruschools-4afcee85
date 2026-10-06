@@ -132,7 +132,7 @@ function ResetPasswordPage() {
             </Link>
           </p>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">Support: {NURU.whatsapp}</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">Support: {NURU.email}</p>
       </div>
     </div>
   );
