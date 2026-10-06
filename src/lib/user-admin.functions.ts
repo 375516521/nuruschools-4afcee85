@@ -64,7 +64,12 @@ export const listAllUsers = createServerFn({ method: "POST" })
       ]);
 
     const schoolName = new Map((schools ?? []).map((s) => [s.id, s.name]));
-    const roleOf = new Map((roles ?? []).map((r) => [r.user_id, r.role as string]));
+    const rank: Record<string, number> = { superadmin: 4, hoi: 3, teacher: 2, student: 1 };
+    const roleOf = new Map<string, string>();
+    for (const r of roles ?? []) {
+      const cur = roleOf.get(r.user_id);
+      if (!cur || (rank[r.role] ?? 0) > (rank[cur] ?? 0)) roleOf.set(r.user_id, r.role as string);
+    }
     const authOf = new Map(
       (authList?.users ?? []).map((u) => [
         u.id,
