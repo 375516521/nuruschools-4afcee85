@@ -246,7 +246,7 @@ function ReportsPage() {
   return (
     <AppShell
       title="Report Cards"
-      subtitle="One-click CBC report cards from recorded marks"
+      subtitle="One-click CBE report cards from recorded marks"
       actions={
         <>
           <Button
@@ -432,7 +432,7 @@ function ReportsPage() {
               <div key={s.id} className="card-nuru print-sheet break-after-page p-6">
                 <SchoolLetterhead
                   school={school}
-                  documentTitle="CBC Learner Report Card"
+                  documentTitle="CBE Learner Report Card"
                   meta={`${yearLabel} Term ${termLabel} · ${gradeLabel}${(s as { streams?: { name?: string } }).streams?.name ? ` ${(s as { streams?: { name?: string } }).streams?.name}` : ""}`}
                 />
                 <div className="mt-3 flex items-center gap-3 rounded-lg bg-secondary/60 p-3 text-xs">

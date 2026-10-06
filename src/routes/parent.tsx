@@ -16,7 +16,7 @@ export const Route = createFileRoute("/parent")({
   head: () => ({
     meta: [
       { title: "Parent Portal — Check Fees & Results | Fanisi Digital Solutions" },
-      { name: "description", content: "Parents: check your child's term fees balance, latest CBC results and download their report card or ID card. No login or OTP required." },
+      { name: "description", content: "Parents: check your child's term fees balance, latest CBE results and download their report card or ID card. No login or OTP required." },
       { property: "og:title", content: "Parent Portal — Fanisi Digital Solutions" },
       { property: "og:description", content: "Check fees, results and attendance instantly with an admission number or your phone number." },
       { property: "og:type", content: "website" },

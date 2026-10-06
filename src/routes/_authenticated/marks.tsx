@@ -92,7 +92,7 @@ function MarksPage() {
   return (
     <AppShell
       title="Marks entry"
-      subtitle="CBC competency levels are derived automatically from the score"
+      subtitle="CBE competency levels are derived automatically from the score"
       actions={<Button size="sm" disabled={!ready || save.isPending} onClick={() => save.mutate()}>
         {save.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save marks
       </Button>}
