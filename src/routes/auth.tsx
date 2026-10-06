@@ -157,7 +157,7 @@ function AuthPage() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Parent? <Link to="/parent" className="font-medium text-primary">Check your child's progress</Link> — no login required.
         </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">Support: {NURU.whatsapp}</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Support: {NURU.email}</p>
       </div>
     </div>
   );

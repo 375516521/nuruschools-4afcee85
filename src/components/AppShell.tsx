@@ -239,7 +239,7 @@ export function AppShell({ title, subtitle, actions, children }: {
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
 
         <footer className="no-print border-t border-border px-4 py-4 text-xs text-muted-foreground lg:px-8">
-          {NURU.name} · Support {NURU.whatsapp} · {NURU.email}
+          {NURU.name} · Support {NURU.email}
         </footer>
       </div>
     </div>

@@ -11,10 +11,10 @@ import { NURU } from "@/lib/nuru";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fanisi Digital Solutions — CBC School Management System for Kenya" },
-      { name: "description", content: "Fanisi Digital Solutions runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
-      { property: "og:title", content: "Fanisi Digital Solutions — CBC School Management System for Kenya" },
-      { property: "og:description", content: "Fanisi Digital Solutions runs your whole school: CBC assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { title: "Fanisi Digital Solutions — CBE School Management System for Kenya" },
+      { name: "description", content: "Fanisi Digital Solutions runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { property: "og:title", content: "Fanisi Digital Solutions — CBE School Management System for Kenya" },
+      { property: "og:description", content: "Fanisi Digital Solutions runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 
 const FEATURES = [
   { icon: IdCard, title: "QR Student ID Engine", body: "HOI sets a prefix and range per grade. IDs generate automatically, never change on promotion, and print 10-up on A4." },
-  { icon: GraduationCap, title: "CBC Assessment", body: "EE1 to BE grading with configurable ranges, plus the seven CBC core competencies scored per learner per term." },
+  { icon: GraduationCap, title: "CBE Assessment", body: "EE1 to BE grading with configurable ranges, plus the seven CBE core competencies scored per learner per term." },
   { icon: Wallet, title: "Fees & MPESA", body: "Fee structures per year, term, grade and stream. Record cash, bank or MPESA payments and see live balances." },
   { icon: Users, title: "Parent Access, No Login", body: "Parents type an admission number, or a learner's first name plus their phone, and see fees, results and ID cards instantly." },
   { icon: Sparkles, title: "AI Report Comments", body: "Generate unique, learner-specific comments for a whole stream in one click, plus exam analysis and defaulter prediction." },
@@ -51,18 +51,18 @@ function Landing() {
       <section className="bg-nuru-hero">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
           <Badge variant="secondary" className="mb-5 gap-1.5">
-            <Sparkles className="size-3" /> Built for the Kenyan CBC curriculum
+            <Sparkles className="size-3" /> Built for the Kenyan CBE (Competency Based Education) curriculum
           </Badge>
           <h1 className="max-w-3xl font-display text-4xl leading-[1.1] font-extrabold tracking-tight md:text-6xl">
             One system to run your <span className="text-nuru-gradient">entire school</span>.
           </h1>
-          <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">{NURU.tagline}. From admission number to graduation — admissions, CBC assessment, QR ID cards, fees, parent access and AI-powered reports.</p>
+          <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">{NURU.tagline}. From admission number to graduation — admissions, CBE assessment, QR ID cards, fees, parent access and AI-powered reports.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg"><Link to="/auth">Open the school dashboard <ArrowRight className="size-4" /></Link></Button>
             <Button asChild size="lg" variant="outline"><Link to="/parent">I'm a parent</Link></Button>
           </div>
           <dl className="mt-12 grid max-w-2xl grid-cols-2 gap-6 sm:grid-cols-4">
-            {[["14", "Grade levels"], ["7", "CBC bands"], ["<1.5s", "Load time"], ["99.9%", "Uptime SLA"]].map(([v, l]) => (
+            {[["14", "Grade levels"], ["7", "CBE bands"], ["<1.5s", "Load time"], ["99.9%", "Uptime SLA"]].map(([v, l]) => (
               <div key={l}>
                 <dt className="font-display text-2xl font-bold text-primary">{v}</dt>
                 <dd className="text-xs text-muted-foreground">{l}</dd>
@@ -111,8 +111,8 @@ function Landing() {
       <footer className="border-t border-border bg-secondary/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center">
           <p className="mr-auto font-display font-semibold">{NURU.name}</p>
-          <a href={NURU.whatsappLink} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-            <MessageCircle className="size-4" /> {NURU.whatsapp}
+          <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+            <MessageCircle className="size-4" /> {NURU.email}
           </a>
           <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
             <Mail className="size-4" /> {NURU.email}

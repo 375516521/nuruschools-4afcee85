@@ -497,7 +497,7 @@ function ExamsPage() {
                   <Plus className="size-4" /> Add band
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setScaleDraft(DEFAULT_SCALE)}>
-                  Reset to CBC default
+                  Reset to CBE default
                 </Button>
                 <Button
                   size="sm"

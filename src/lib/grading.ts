@@ -4,7 +4,7 @@ export type GradeBand = { code: string; label: string; min: number; max: number 
 
 export const DEFAULT_SCALE: GradeBand[] = GRADING_SCALE.map((g) => ({ ...g }));
 
-/** Read a school's custom scale, falling back to the national CBC bands. */
+/** Read a school's custom scale, falling back to the national CBE bands. */
 export function parseScale(raw: unknown): GradeBand[] {
   if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_SCALE;
   const bands = raw

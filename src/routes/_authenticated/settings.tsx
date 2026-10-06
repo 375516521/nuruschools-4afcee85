@@ -1191,7 +1191,7 @@ function SettingsInner() {
         <section className="card-nuru p-5">
           <h2 className="font-display font-semibold">Support</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            WhatsApp {NURU.whatsapp} · Email {NURU.email}
+            Email {NURU.email}
           </p>
         </section>
           </div>
