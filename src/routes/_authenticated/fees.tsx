@@ -288,6 +288,20 @@ function FeesPage() {
     setBulkIndex((i) => i + 1);
   }
 
+  /** Opens a WhatsApp message for every parent with a balance, all from one click. */
+  function sendAllReminders() {
+    let blocked = 0;
+    const rest = owingWithPhone.slice(bulkIndex);
+    rest.forEach((r) => {
+      const link = reminderLink(r.s, r.balance);
+      if (link && !window.open(link, "_blank")) blocked++;
+    });
+    setBulkIndex(owingWithPhone.length);
+    if (blocked)
+      toast.error(`Your browser blocked ${blocked} message window(s). Allow pop-ups for this site and try again.`);
+    else toast.success(`Opened WhatsApp messages for ${rest.length} parent(s). Press Send in each chat.`);
+  }
+
   const { data: grades } = useQuery({
     queryKey: ["grades", schoolId],
     enabled: !!schoolId,
@@ -747,8 +761,14 @@ function FeesPage() {
               <p className="text-muted-foreground">No owing learner has a guardian phone saved.</p>
             ) : null}
           </div>
-          <DialogFooter>
-            <Button onClick={sendNextReminder} disabled={bulkIndex >= owingWithPhone.length}>
+          <DialogFooter className="gap-2">
+            <Button
+              onClick={sendAllReminders}
+              disabled={bulkIndex >= owingWithPhone.length}
+            >
+              <Send className="size-4" /> Send to all ({owingWithPhone.length - bulkIndex})
+            </Button>
+            <Button variant="outline" onClick={sendNextReminder} disabled={bulkIndex >= owingWithPhone.length}>
               <MessageCircle className="size-4" />{" "}
               {bulkIndex >= owingWithPhone.length
                 ? "All reminders sent"
