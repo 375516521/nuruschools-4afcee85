@@ -29,6 +29,13 @@
       "when": 1791205033388,
       "tag": "0003_class_teachers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791275952851,
+      "tag": "0004_hoi_access_school_admin_read",
+      "breakpoints": true
     }
   ]
 }

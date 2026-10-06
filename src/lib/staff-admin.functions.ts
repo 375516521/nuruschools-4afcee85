@@ -191,7 +191,7 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
           grade_ids: data.grade_ids,
           modules: data.modules,
         },
-        { onConflict: "user_id" },
+        { onConflict: "user_id,school_id" },
       );
       if (aErr) throw new Error(aErr.message);
     }
@@ -208,4 +208,58 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
     const verified = await verifyLogin(email, data.password);
     if (!verified) throw new Error("Account saved, but the test sign-in failed. Please try again.");
     return { ok: true as const, email, username, verified };
+  });
+
+const updateSchema = z.object({
+  teacher_id: z.string().uuid(),
+  grade_ids: z.array(z.string().uuid()).max(20),
+  subject_ids: z.array(z.string().uuid()).max(60),
+  modules: z.array(z.string().max(30)).max(20),
+  is_active: z.boolean(),
+});
+
+/** Changes an existing teacher's classes, learning areas, modules or active state (super admin or HOI of that school). */
+export const updateTeacherAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => updateSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: teacher } = await supabaseAdmin
+      .from("teachers")
+      .select("id, school_id, user_id")
+      .eq("id", data.teacher_id)
+      .maybeSingle();
+    if (!teacher) throw new Error("Teacher not found.");
+    const { data: allowed } = await context.supabase.rpc("is_school_admin", { _school: teacher.school_id });
+    if (!allowed) throw new Error("Only the super admin or this school's Head of Institution can change this teacher.");
+
+    await supabaseAdmin.from("teachers").update({ is_active: data.is_active }).eq("id", teacher.id);
+    await supabaseAdmin.from("teacher_subjects").delete().eq("teacher_id", teacher.id);
+    const rows = data.grade_ids.flatMap((gid) =>
+      data.subject_ids.map((sid) => ({ school_id: teacher.school_id, teacher_id: teacher.id, subject_id: sid, grade_id: gid })),
+    );
+    if (rows.length) {
+      const { error } = await supabaseAdmin.from("teacher_subjects").insert(rows);
+      if (error) throw new Error(error.message);
+    }
+    if (teacher.user_id) {
+      const { error } = await supabaseAdmin.from("hoi_access").upsert(
+        { user_id: teacher.user_id, school_id: teacher.school_id, grade_ids: data.grade_ids, modules: data.modules },
+        { onConflict: "user_id,school_id" },
+      );
+      if (error) throw new Error(error.message);
+      if (data.is_active) {
+        await supabaseAdmin.auth.admin.updateUserById(teacher.user_id, { ban_duration: "none" });
+      } else {
+        await supabaseAdmin.auth.admin.updateUserById(teacher.user_id, { ban_duration: "876000h" });
+      }
+    }
+    await supabaseAdmin.from("audit_logs").insert({
+      school_id: teacher.school_id,
+      user_id: context.userId,
+      action: "teacher_access_updated",
+      entity: "teachers",
+      entity_id: teacher.id,
+    });
+    return { ok: true as const };
   });

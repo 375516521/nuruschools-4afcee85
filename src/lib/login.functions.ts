@@ -18,7 +18,7 @@ export const signInWithUsername = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row?.email) return { error: "Wrong username or password." } as const;
     const { createClient } = await import("@supabase/supabase-js");
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+    const key = (process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"])!;
     const client = createClient(process.env["SUPABASE_URL"]!, key, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
