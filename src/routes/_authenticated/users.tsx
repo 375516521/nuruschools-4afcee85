@@ -71,7 +71,7 @@ function UsersPage() {
   const [pwUser, setPwUser] = useState<ManagedUser | null>(null);
   const [newPassword, setNewPassword] = useState("");
 
-  const { data: users, isLoading } = useQuery({
+  const { data: users, isLoading, error: listError, refetch } = useQuery({
     queryKey: ["all-users"],
     enabled: isSuper,
     queryFn: () => callList({ data: undefined }),
@@ -203,7 +203,7 @@ function UsersPage() {
 
   return (
     <AppShell
-      title="Users & Schools"
+      title="Users & Accounts"
       subtitle="Every account across every connected school"
       actions={
         pendingResets.length ? (
@@ -215,7 +215,7 @@ function UsersPage() {
       }
     >
       <div className="grid gap-5 lg:grid-cols-3">
-        <section className="card-nuru p-5 lg:col-span-2">
+        <section className="card-nuru p-5 lg:col-span-3">
           <h2 className="flex items-center gap-2 font-display font-semibold">
             <ShieldCheck className="size-4 text-primary" /> User directory
           </h2>
@@ -260,6 +260,15 @@ function UsersPage() {
                   <tr>
                     <td colSpan={6} className="py-6 text-center text-muted-foreground">
                       <Loader2 className="mx-auto size-4 animate-spin" />
+                    </td>
+                  </tr>
+                ) : listError ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-destructive">
+                      Could not load accounts: {(listError as Error).message}{" "}
+                      <Button size="sm" variant="outline" onClick={() => void refetch()}>
+                        Try again
+                      </Button>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
@@ -344,7 +353,7 @@ function UsersPage() {
           </div>
         </section>
 
-        <div className="space-y-5">
+        <div className="grid gap-5 lg:col-span-3 lg:grid-cols-2">
           <section className="card-nuru p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <School className="size-4 text-primary" /> Schools
