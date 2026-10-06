@@ -1,0 +1,1 @@
+CREATE POLICY hoi_access_school_admin_read ON public.hoi_access FOR SELECT TO authenticated USING (public.is_school_admin(school_id));

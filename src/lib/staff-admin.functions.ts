@@ -191,7 +191,7 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
           grade_ids: data.grade_ids,
           modules: data.modules,
         },
-        { onConflict: "user_id" },
+        { onConflict: "user_id,school_id" },
       );
       if (aErr) throw new Error(aErr.message);
     }

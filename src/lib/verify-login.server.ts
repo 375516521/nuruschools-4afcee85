@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 /** Signs in with the new credentials once to prove the login really works, then discards the session. */
 export async function verifyLogin(email: string, password: string): Promise<boolean> {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
+  const key = (process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"])!;
   const client = createClient(process.env["SUPABASE_URL"]!, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
