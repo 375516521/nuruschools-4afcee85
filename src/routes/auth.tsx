@@ -140,10 +140,10 @@ function AuthPage() {
                   <Button type="submit" className="w-full" disabled={busy}>
                     {busy ? <Loader2 className="size-4 animate-spin" /> : null} Sign in
                   </Button>
-                  <button type="button" onClick={() => setForgot(true)}
-                    className="w-full text-center text-xs font-medium text-primary underline-offset-2 hover:underline">
+                  <Button type="button" variant="ghost" disabled
+                    className="w-full text-center text-xs font-medium">
                     Forgot your password?
-                  </button>
+                  </Button>
                 </form>
               )}
           </div>

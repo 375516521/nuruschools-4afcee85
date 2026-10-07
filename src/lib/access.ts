@@ -16,27 +16,8 @@ export const ROUTE_MODULE: Record<string, string> = {
   "/assets": "assets",
 };
 
-/** School-level modules the super admin can switch on/off per school. */
-export const SCHOOL_MODULES: { key: string; route: string; label: string }[] = [
-  { key: "dashboard", route: "/dashboard", label: "Dashboard" },
-  { key: "learners", route: "/students", label: "Learners" },
-  { key: "attendance", route: "/attendance", label: "Attendance" },
-  { key: "id_cards", route: "/id-cards", label: "ID Card Centre" },
-  { key: "exams_marks", route: "/marks", label: "Exams & Marks" },
-  { key: "exam_analytics", route: "/exams", label: "Exam Analytics" },
-  { key: "report_cards", route: "/reports", label: "Report Cards" },
-  { key: "promotions", route: "/promotions", label: "Promotions" },
-  { key: "fees_finance", route: "/fees", label: "Fees & Finance" },
-  { key: "library", route: "/library", label: "Library" },
-  { key: "assets", route: "/assets", label: "Assets" },
-  { key: "settings", route: "/settings", label: "Settings" },
-  { key: "users_schools", route: "/users", label: "Users & Schools" },
-];
-
-/** Modules a super admin or HOI can hand to a teacher (admin-only pages excluded). */
-export const TEACHER_MODULES = SCHOOL_MODULES.filter(
-  (m) => !["dashboard", "settings", "users_schools", "promotions"].includes(m.key),
-);
+import { SCHOOL_MODULES } from "./staff-modules";
+export { SCHOOL_MODULES, TEACHER_MODULES } from "./staff-modules";
 
 /** Disabled module keys + disabled grade ids for a school. Missing rows mean "enabled". */
 export type SchoolAccess = { disabledModules: string[]; disabledGrades: string[] };
@@ -74,7 +55,7 @@ export async function onlyEnabledGrades<T extends { id: string }>(
   const [{ disabledGrades }, mine] = await Promise.all([
     fetchSchoolAccess(schoolId),
     u.user
-      ? supabase.from("hoi_access").select("grade_ids").eq("user_id", u.user.id).maybeSingle()
+      ? supabase.from("hoi_access").select("grade_ids").eq("user_id", u.user.id).eq("school_id", schoolId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const granted = ((mine.data as { grade_ids?: string[] } | null)?.grade_ids ?? []) as string[];
@@ -118,7 +99,7 @@ export function canUseRoute(
   if (!mod && !schoolKey) return true;
   if (route === "/dashboard") return true;
   const mods = access?.modules ?? null;
-  if (!mods || mods.length === 0) return true; // no restriction saved yet
+  if (!mods || mods.length === 0) return !roles.includes("teacher");
   return (!!mod && mods.includes(mod)) || (!!schoolKey && mods.includes(schoolKey));
 }
 
@@ -153,7 +134,7 @@ export function useAllowedGrades(
  */
 export async function onlyMySubjects<T extends { id: string }>(gradeId: string, rows: T[]): Promise<T[]> {
   const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return rows;
+  if (!u.user) return [];
   const [{ data: roles }, { data: isClassTeacher }] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", u.user.id),
     supabase.rpc("is_class_teacher", { _grade_id: gradeId }),
@@ -161,13 +142,13 @@ export async function onlyMySubjects<T extends { id: string }>(gradeId: string, 
   const r = (roles ?? []).map((x) => x.role as string);
   if (r.includes("superadmin") || r.includes("hoi") || isClassTeacher) return rows;
   const { data: t } = await supabase.from("teachers").select("id").eq("user_id", u.user.id).maybeSingle();
-  if (!t) return rows;
+  if (!t) return [];
   const { data: ts } = await supabase
     .from("teacher_subjects")
     .select("subject_id")
     .eq("teacher_id", t.id)
     .eq("grade_id", gradeId);
   const ids = (ts ?? []).map((x) => x.subject_id);
-  if (ids.length === 0) return rows;
+  if (ids.length === 0) return [];
   return rows.filter((s) => ids.includes(s.id));
 }

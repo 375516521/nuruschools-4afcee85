@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Loader2, UserPlus, Star, ShieldCheck } from "lucide-react";
+import { Loader2, UserPlus, Star, ShieldCheck, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createTeacherAccount } from "@/lib/staff-admin.functions";
+import { createTeacherAccount, updateTeacherAccess } from "@/lib/staff-admin.functions";
 import { TEACHER_MODULES, useAllowedGrades, useHoiAccess } from "@/lib/access";
 import { logAudit } from "@/lib/audit";
 
@@ -35,6 +35,8 @@ export const Route = createFileRoute("/_authenticated/teachers")({
     ],
   }),
 });
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const NONE = "__none__";
 
@@ -63,6 +65,20 @@ function TeachersInner() {
   const { data: myAccess } = useHoiAccess(session?.user?.id ?? null);
   const { data: grades } = useAllowedGrades(schoolId, isSuper, myAccess ?? null);
   const callCreate = useServerFn(createTeacherAccount);
+  const callUpdate = useServerFn(updateTeacherAccess);
+  const [editing, setEditing] = useState<Teacher | null>(null);
+  const [editGrades, setEditGrades] = useState<string[]>([]);
+  const [editSubjects, setEditSubjects] = useState<string[]>([]);
+  const [editModules, setEditModules] = useState<string[]>([]);
+  const [editActive, setEditActive] = useState(true);
+  const update = useMutation({
+    mutationFn: async () => {
+      if (!editing) throw new Error("Choose a teacher.");
+      return callUpdate({ data: { teacher_id: editing.id, grade_ids: editGrades, subject_ids: editSubjects, modules: editModules, is_active: editActive } });
+    },
+    onSuccess: () => { toast.success("Teacher assignments saved."); setEditing(null); void qc.invalidateQueries({ queryKey: ["t-list"] }); void qc.invalidateQueries({ queryKey: ["hoi-access"] }); void qc.invalidateQueries({ queryKey: ["signatories"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const [tGrades, setTGrades] = useState<string[]>([]);
   const [tSubjects, setTSubjects] = useState<string[]>([]);
@@ -82,7 +98,7 @@ function TeachersInner() {
     queryFn: async () =>
       (await supabase.from("subjects").select("id, name, grade_id").eq("school_id", schoolId!).order("name")).data ?? [],
   });
-  const { data: info } = useQuery({
+  const { data: info, error: infoError } = useQuery({
     queryKey: ["t-list", schoolId],
     enabled: !!schoolId,
     queryFn: async () => {
@@ -92,6 +108,7 @@ function TeachersInner() {
         supabase.from("hoi_access").select("user_id, grade_ids, modules").eq("school_id", schoolId!),
         supabase.from("class_teachers").select("id, grade_id, stream_id, teacher_user_id").eq("school_id", schoolId!),
       ]);
+      for (const result of [t, ts, acc, ct]) if (result.error) throw new Error(result.error.message);
       return {
         teachers: (t.data ?? []) as Teacher[],
         links: ts.data ?? [],
@@ -300,7 +317,7 @@ function TeachersInner() {
                       <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={NONE}>No class teacher</SelectItem>
-                        {teacherUsers.map((t) => <SelectItem key={t.id} value={t.user_id!}>{t.full_name}</SelectItem>)}
+                        {teacherUsers.map((t) => <SelectItem key={t.id} value={t.user_id ?? NONE}>{t.full_name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -320,7 +337,7 @@ function TeachersInner() {
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs uppercase text-muted-foreground">
-                  <tr><th className="py-2">Name</th><th>Login</th><th>Class teacher of</th><th>Classes</th><th>Learning areas</th><th>Modules</th></tr>
+                  <tr><th className="py-2">Name</th><th>Login</th><th>Class teacher of</th><th>Classes</th><th>Learning areas</th><th>Modules</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {(info?.teachers ?? []).map((t) => {
@@ -338,12 +355,13 @@ function TeachersInner() {
                         </td>
                         <td className="py-2">{gIds.map(gName).filter(Boolean).join(", ") || "—"}</td>
                         <td className="py-2">{subIds.map(subName).filter(Boolean).join(", ") || "—"}</td>
-                        <td className="py-2">{(acc?.modules ?? []).map(modLabel).join(", ") || "All"}</td>
+                        <td className="py-2">{(acc?.modules ?? []).map(modLabel).join(", ") || "Not assigned"}</td>
+                         <td><Button variant="ghost" size="icon" aria-label={`Edit ${t.full_name}`} title="Edit teacher" onClick={() => { setEditing(t); setEditGrades(gIds); setEditSubjects(subIds); setEditModules(acc?.modules ?? []); setEditActive(t.is_active); }}><Pencil className="size-4" /></Button></td>
                       </tr>
                     );
                   })}
                   {(info?.teachers ?? []).length === 0 ? (
-                    <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">No teachers yet.</td></tr>
+                    <tr><td colSpan={7} className="py-4 text-center text-muted-foreground">No teachers yet.</td></tr>
                   ) : null}
                 </tbody>
               </table>
@@ -351,6 +369,16 @@ function TeachersInner() {
           </section>
         </div>
       )}
+      <Dialog open={!!editing} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader><DialogTitle>Edit {editing?.full_name}</DialogTitle></DialogHeader>
+          <Picker title="Classes">{(grades ?? []).map((g) => <label key={g.id} className="flex items-center gap-2 text-sm"><Checkbox checked={editGrades.includes(g.id)} onCheckedChange={(on) => { setEditGrades((p) => on ? [...p, g.id] : p.filter((id) => id !== g.id)); if (!on) setEditSubjects((p) => p.filter((id) => subjects?.find((s) => s.id === id)?.grade_id !== g.id)); }} />{g.name}</label>)}</Picker>
+          <Picker title="Learning areas">{(subjects ?? []).filter((s) => !s.grade_id || editGrades.includes(s.grade_id)).map((s) => <label key={s.id} className="flex items-center gap-2 text-sm"><Checkbox checked={editSubjects.includes(s.id)} onCheckedChange={(on) => setEditSubjects((p) => on ? [...p, s.id] : p.filter((id) => id !== s.id))} />{s.name} {s.grade_id ? `(${gName(s.grade_id)})` : ""}</label>)}</Picker>
+          <Picker title="Modules">{TEACHER_MODULES.map((m) => <label key={m.key} className="flex items-center gap-2 text-sm"><Checkbox checked={editModules.includes(m.key)} onCheckedChange={(on) => setEditModules((p) => on ? [...p, m.key] : p.filter((id) => id !== m.key))} />{m.label}</label>)}</Picker>
+          <label className="flex items-center gap-2 text-sm"><Checkbox checked={editActive} onCheckedChange={(on) => setEditActive(on === true)} />Account active</label>
+          <Button disabled={update.isPending} onClick={() => update.mutate()}>{update.isPending ? <Loader2 className="size-4 animate-spin" /> : null}Save teacher</Button>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
