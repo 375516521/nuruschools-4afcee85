@@ -32,35 +32,10 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => teacherSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const [{ data: isSuper }, { data: isHoi }] = await Promise.all([
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "superadmin" }),
-      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "hoi" }),
-    ]);
-
-    if (!isSuper) {
-      if (!isHoi) throw new Error("Only a super admin or a Head of Institution can create teachers.");
-      const { data: profile } = await context.supabase
-        .from("profiles")
-        .select("school_id")
-        .eq("id", context.userId)
-        .maybeSingle();
-      if (profile?.school_id !== data.school_id)
-        throw new Error("You can only create teachers for your own school.");
-
-      // The HOI may only assign grades they have been granted access to.
-      const { data: access } = await context.supabase
-        .from("hoi_access")
-        .select("grade_ids")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      const allowed = (access?.grade_ids ?? []) as string[];
-      if (allowed.length) {
-        const blocked = data.grade_ids.filter((g) => !allowed.includes(g));
-        if (blocked.length)
-          throw new Error("You can only assign teachers to the grades you have been given access to.");
-      }
-    }
-
+    const { validateStaffAssignments, subjectAssignmentRows } = await import("./staff-validation.server");
+    const validated = await validateStaffAssignments(context.supabase, context.userId, data.school_id, data.grade_ids, data.modules, data.subject_ids, data.class_teacher_grade_id, data.class_teacher_stream_id);
+    data.grade_ids = validated.gradeIds;
+    if (!data.subject_ids.length) throw new Error("Select at least one learning area.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email = data.email.toLowerCase();
@@ -74,30 +49,12 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
     if (clash && clash.email?.toLowerCase() !== email)
       throw new Error("That username is already used in another school.");
 
-    const { data: list, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1000,
-    });
-    if (listError) throw new Error(listError.message);
-    const existing = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
-
-    let userId: string;
-    if (existing) {
-      const { error } = await supabaseAdmin.auth.admin.updateUserById(existing.id, {
-        password: data.password,
-        email_confirm: true,
-      });
-      if (error) throw new Error(error.message);
-      userId = existing.id;
-    } else {
-      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: data.password,
-        email_confirm: true,
-        user_metadata: { full_name: data.full_name },
-      });
-      if (error) throw new Error(error.message);
-      userId = created.user.id;
-    }
+    const { data: existing, error: lookupError } = await supabaseAdmin.from("profiles").select("id").ilike("email", email).maybeSingle();
+    if (lookupError) throw new Error(lookupError.message);
+    if (existing) throw new Error("This email already has an account. Edit the existing teacher instead.");
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({ email, password: data.password, email_confirm: true, user_metadata: { full_name: data.full_name } });
+    if (createError || !created.user) throw new Error(createError?.message ?? "Could not create teacher login.");
+    const userId = created.user.id;
 
     const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
       {
@@ -148,14 +105,7 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
 
     if (data.subject_ids.length && data.grade_ids.length) {
       await supabaseAdmin.from("teacher_subjects").delete().eq("teacher_id", teacher.id);
-      const rows = data.grade_ids.flatMap((gid) =>
-        data.subject_ids.map((sid) => ({
-          school_id: data.school_id,
-          teacher_id: teacher.id,
-          subject_id: sid,
-          grade_id: gid,
-        })),
-      );
+      const rows = subjectAssignmentRows(data.school_id, teacher.id, data.grade_ids, validated.subjects);
       const { error: tsErr } = await supabaseAdmin.from("teacher_subjects").insert(rows);
       if (tsErr) throw new Error(tsErr.message);
     }
@@ -172,7 +122,8 @@ export const createTeacherAccount = createServerFn({ method: "POST" })
       del = data.class_teacher_stream_id
         ? del.eq("stream_id", data.class_teacher_stream_id)
         : del.is("stream_id", null);
-      await del;
+      const { error: deleteError } = await del;
+      if (deleteError) throw new Error(deleteError.message);
       const { error: cErr } = await supabaseAdmin.from("class_teachers").insert({
         school_id: data.school_id,
         grade_id: data.class_teacher_grade_id,
@@ -223,21 +174,17 @@ export const updateTeacherAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => updateSchema.parse(input))
   .handler(async ({ data, context }) => {
+    const { data: teacher, error: readError } = await context.supabase.from("teachers").select("id, school_id, user_id").eq("id", data.teacher_id).maybeSingle();
+    if (readError || !teacher) throw new Error(readError?.message ?? "Teacher not found.");
+    const { validateStaffAssignments, subjectAssignmentRows } = await import("./staff-validation.server");
+    const validated = await validateStaffAssignments(context.supabase, context.userId, teacher.school_id, data.grade_ids, data.modules, data.subject_ids);
+    if (!data.subject_ids.length) throw new Error("Select at least one learning area.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: teacher } = await supabaseAdmin
-      .from("teachers")
-      .select("id, school_id, user_id")
-      .eq("id", data.teacher_id)
-      .maybeSingle();
-    if (!teacher) throw new Error("Teacher not found.");
-    const { data: allowed } = await context.supabase.rpc("is_school_admin", { _school: teacher.school_id });
-    if (!allowed) throw new Error("Only the super admin or this school's Head of Institution can change this teacher.");
-
-    await supabaseAdmin.from("teachers").update({ is_active: data.is_active }).eq("id", teacher.id);
-    await supabaseAdmin.from("teacher_subjects").delete().eq("teacher_id", teacher.id);
-    const rows = data.grade_ids.flatMap((gid) =>
-      data.subject_ids.map((sid) => ({ school_id: teacher.school_id, teacher_id: teacher.id, subject_id: sid, grade_id: gid })),
-    );
+    const { error: activeError } = await supabaseAdmin.from("teachers").update({ is_active: data.is_active }).eq("id", teacher.id);
+    if (activeError) throw new Error(activeError.message);
+    const { error: deleteError } = await supabaseAdmin.from("teacher_subjects").delete().eq("teacher_id", teacher.id);
+    if (deleteError) throw new Error(deleteError.message);
+    const rows = subjectAssignmentRows(teacher.school_id, teacher.id, validated.gradeIds, validated.subjects);
     if (rows.length) {
       const { error } = await supabaseAdmin.from("teacher_subjects").insert(rows);
       if (error) throw new Error(error.message);
@@ -248,10 +195,14 @@ export const updateTeacherAccess = createServerFn({ method: "POST" })
         { onConflict: "user_id,school_id" },
       );
       if (error) throw new Error(error.message);
-      if (data.is_active) {
-        await supabaseAdmin.auth.admin.updateUserById(teacher.user_id, { ban_duration: "none" });
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(teacher.user_id, { ban_duration: data.is_active ? "none" : "876000h" });
+      if (authError) throw new Error(authError.message);
+      if (!data.is_active) {
+        const { error } = await supabaseAdmin.from("class_teachers").delete().eq("teacher_user_id", teacher.user_id);
+        if (error) throw new Error(error.message);
       } else {
-        await supabaseAdmin.auth.admin.updateUserById(teacher.user_id, { ban_duration: "876000h" });
+        const { error } = await supabaseAdmin.from("class_teachers").delete().eq("teacher_user_id", teacher.user_id).not("grade_id", "in", `(${data.grade_ids.join(",")})`);
+        if (error) throw new Error(error.message);
       }
     }
     await supabaseAdmin.from("audit_logs").insert({
