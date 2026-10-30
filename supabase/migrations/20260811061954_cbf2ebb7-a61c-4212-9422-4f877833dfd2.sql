@@ -1,5 +1,5 @@
 -- =========================================================
--- FULL SCHOOL SAAS - 2M LEARNERS READY
+-- FULL SCHOOL SAAS - 2M and above LEARNERS READY
 -- Superadmin creates HOI -> HOI creates teachers -> RBAC by modules/grades/subjects
 -- =========================================================
 
