@@ -1,4 +1,3 @@
-
 -- ============ ENUMS ============
 CREATE TYPE public.app_role AS ENUM ('superadmin','hoi','teacher','student');
 CREATE TYPE public.student_status AS ENUM ('active','deactivated','graduated','archived','transferred_out');
@@ -260,25 +259,25 @@ CREATE TABLE public.audit_logs (
 );
 
 -- ============ INDEXES ============
-CREATE INDEX idx_profiles_school ON public.profiles(school_id);
-CREATE INDEX idx_user_roles_user ON public.user_roles(user_id);
-CREATE INDEX idx_years_school ON public.academic_years(school_id);
-CREATE INDEX idx_terms_year ON public.terms(academic_year_id);
-CREATE INDEX idx_grades_school ON public.grades(school_id);
-CREATE INDEX idx_streams_grade ON public.streams(grade_id);
-CREATE INDEX idx_students_school ON public.students(school_id);
-CREATE INDEX idx_students_grade ON public.students(grade_id);
-CREATE INDEX idx_students_admno ON public.students(adm_no);
-CREATE INDEX idx_students_guardian ON public.students(guardian_phone);
-CREATE INDEX idx_teachers_school ON public.teachers(school_id);
-CREATE INDEX idx_subjects_grade ON public.subjects(grade_id);
-CREATE INDEX idx_ts_teacher ON public.teacher_subjects(teacher_id);
-CREATE INDEX idx_exams_term ON public.exams(term_id);
-CREATE INDEX idx_marks_exam ON public.marks(exam_id);
-CREATE INDEX idx_marks_student ON public.marks(student_id);
-CREATE INDEX idx_fs_term ON public.fee_structures(term_id);
-CREATE INDEX idx_fp_student ON public.fee_payments(student_id);
-CREATE INDEX idx_audit_school ON public.audit_logs(school_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_school ON public.profiles(school_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_user ON public.user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_years_school ON public.academic_years(school_id);
+CREATE INDEX IF NOT EXISTS idx_terms_year ON public.terms(academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_grades_school ON public.grades(school_id);
+CREATE INDEX IF NOT EXISTS idx_streams_grade ON public.streams(grade_id);
+CREATE INDEX IF NOT EXISTS idx_students_school ON public.students(school_id);
+CREATE INDEX IF NOT EXISTS idx_students_grade ON public.students(grade_id);
+CREATE INDEX IF NOT EXISTS idx_students_admno ON public.students(adm_no);
+CREATE INDEX IF NOT EXISTS idx_students_guardian ON public.students(guardian_phone);
+CREATE INDEX IF NOT EXISTS idx_teachers_school ON public.teachers(school_id);
+CREATE INDEX IF NOT EXISTS idx_subjects_grade ON public.subjects(grade_id);
+CREATE INDEX IF NOT EXISTS idx_ts_teacher ON public.teacher_subjects(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_exams_term ON public.exams(term_id);
+CREATE INDEX IF NOT EXISTS idx_marks_exam ON public.marks(exam_id);
+CREATE INDEX IF NOT EXISTS idx_marks_student ON public.marks(student_id);
+CREATE INDEX IF NOT EXISTS idx_fs_term ON public.fee_structures(term_id);
+CREATE INDEX IF NOT EXISTS idx_fp_student ON public.fee_payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_audit_school ON public.audit_logs(school_id);
 
 -- ============ GENERATOR FUNCTIONS ============
 CREATE OR REPLACE FUNCTION public.generate_adm_no(_school_id uuid, _year int)
@@ -320,10 +319,10 @@ BEGIN
   RETURN NEW;
 END; $$;
 
+DROP TRIGGER IF EXISTS trg_students_before_insert ON public.students;
 CREATE TRIGGER trg_students_before_insert
 BEFORE INSERT ON public.students FOR EACH ROW EXECUTE FUNCTION public.students_before_insert();
 
--- adm_no / student_id are immutable
 CREATE OR REPLACE FUNCTION public.students_protect_ids()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN
@@ -332,10 +331,10 @@ BEGIN
   RETURN NEW;
 END; $$;
 
+DROP TRIGGER IF EXISTS trg_students_protect_ids ON public.students;
 CREATE TRIGGER trg_students_protect_ids
 BEFORE UPDATE ON public.students FOR EACH ROW EXECUTE FUNCTION public.students_protect_ids();
 
--- new auth user -> profile
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
@@ -345,10 +344,10 @@ BEGIN
   RETURN NEW;
 END; $$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- public ID verification (safe columns only)
 CREATE OR REPLACE FUNCTION public.verify_student_id(_adm_no text)
 RETURNS TABLE (adm_no text, student_id text, full_name text, grade text, stream text, photo_url text, school_name text, school_code text, status text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -361,7 +360,6 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   WHERE upper(s.adm_no) = upper(_adm_no);
 $$;
 
--- parent lookup (no login): by adm no OR first name + guardian phone
 CREATE OR REPLACE FUNCTION public.parent_lookup(_adm_no text DEFAULT NULL, _first_name text DEFAULT NULL, _guardian_phone text DEFAULT NULL)
 RETURNS TABLE (id uuid, adm_no text, student_id text, full_name text, grade text, stream text, photo_url text, school_name text)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
@@ -380,7 +378,6 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   LIMIT 20;
 $$;
 
--- parent dashboard summary for one student
 CREATE OR REPLACE FUNCTION public.parent_student_summary(_student_id uuid)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT jsonb_build_object(
@@ -434,7 +431,7 @@ GRANT EXECUTE ON FUNCTION public.verify_student_id(text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.parent_lookup(text,text,text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.parent_student_summary(uuid) TO anon, authenticated;
 
--- ============ RLS ============
+-- ============ RLS FIX - THIS WAS MISSING AND BROKE YOUR FRONTEND ============
 ALTER TABLE public.schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
@@ -456,21 +453,39 @@ ALTER TABLE public.fee_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transfers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "profiles self read" ON public.profiles FOR SELECT TO authenticated
-  USING (id = auth.uid() OR public.in_my_school(school_id));
-CREATE POLICY "profiles self update" ON public.profiles FOR UPDATE TO authenticated
-  USING (id = auth.uid() OR public.is_superadmin()) WITH CHECK (id = auth.uid() OR public.is_superadmin());
-CREATE POLICY "profiles admin write" ON public.profiles FOR INSERT TO authenticated
-  WITH CHECK (public.is_superadmin() OR public.has_role(auth.uid(),'hoi'));
+-- Policies: superadmin sees all, others see own school
+DROP POLICY IF EXISTS "schools_select" ON public.schools;
+CREATE POLICY "schools_select" ON public.schools FOR SELECT TO authenticated USING (public.is_superadmin() OR id = public.current_school_id());
+DROP POLICY IF EXISTS "schools_all_write" ON public.schools;
+CREATE POLICY "schools_all_write" ON public.schools FOR ALL TO authenticated USING (public.is_superadmin() OR public.is_school_admin(id)) WITH CHECK (public.is_superadmin() OR public.is_school_admin(id));
 
-CREATE POLICY "roles read own" ON public.user_roles FOR SELECT TO authenticated
-  USING (user_id = auth.uid() OR public.is_superadmin() OR public.has_role(auth.uid(),'hoi'));
-CREATE POLICY "roles superadmin manage" ON public.user_roles FOR ALL TO authenticated
-  USING (public.is_superadmin()) WITH CHECK (public.is_superadmin());
+DROP POLICY IF EXISTS "profiles_select" ON public.profiles;
+CREATE POLICY "profiles_select" ON public.profiles FOR SELECT TO authenticated USING (public.is_superadmin() OR school_id = public.current_school_id() OR id = auth.uid());
+DROP POLICY IF EXISTS "profiles_insert" ON public.profiles;
+CREATE POLICY "profiles_insert" ON public.profiles FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "profiles_update" ON public.profiles;
+CREATE POLICY "profiles_update" ON public.profiles FOR UPDATE TO authenticated USING (public.is_superadmin() OR id = auth.uid() OR public.is_school_admin(school_id)) WITH CHECK (public.is_superadmin() OR id = auth.uid() OR public.is_school_admin(school_id));
 
-CREATE POLICY "schools read" ON public.schools FOR SELECT TO authenticated
-  USING (public.in_my_school(id));
-CREATE POLICY "schools superadmin manage" ON public.schools FOR ALL TO authenticated
-  USING (public.is_superadmin()) WITH CHECK (public.is_superadmin());
-CREATE POLICY "schools hoi update" ON public.schools FOR UPDATE TO authenticated
-  USING (public.is_school_admin(id)) WITH CHECK (public.is_school_admin(id));
+DROP POLICY IF EXISTS "roles_select" ON public.user_roles;
+CREATE POLICY "roles_select" ON public.user_roles FOR SELECT TO authenticated USING (public.is_superadmin() OR user_id = auth.uid() OR school_id = public.current_school_id());
+DROP POLICY IF EXISTS "roles_write" ON public.user_roles;
+CREATE POLICY "roles_write" ON public.user_roles FOR ALL TO authenticated USING (public.is_superadmin()) WITH CHECK (public.is_superadmin());
+
+-- All school-scoped tables: same school only
+DROP POLICY IF EXISTS "years_all" ON public.academic_years; CREATE POLICY "years_all" ON public.academic_years FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "terms_all" ON public.terms; CREATE POLICY "terms_all" ON public.terms FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "grades_all" ON public.grades; CREATE POLICY "grades_all" ON public.grades FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "streams_all" ON public.streams; CREATE POLICY "streams_all" ON public.streams FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "grade_id_configs_all" ON public.grade_id_configs; CREATE POLICY "grade_id_configs_all" ON public.grade_id_configs FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "admission_counters_all" ON public.admission_counters; CREATE POLICY "admission_counters_all" ON public.admission_counters FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "teachers_all" ON public.teachers; CREATE POLICY "teachers_all" ON public.teachers FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "students_all" ON public.students; CREATE POLICY "students_all" ON public.students FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "subjects_all" ON public.subjects; CREATE POLICY "subjects_all" ON public.subjects FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "teacher_subjects_all" ON public.teacher_subjects; CREATE POLICY "teacher_subjects_all" ON public.teacher_subjects FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "exams_all" ON public.exams; CREATE POLICY "exams_all" ON public.exams FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "marks_all" ON public.marks; CREATE POLICY "marks_all" ON public.marks FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "competency_all" ON public.competency_scores; CREATE POLICY "competency_all" ON public.competency_scores FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "fee_struct_all" ON public.fee_structures; CREATE POLICY "fee_struct_all" ON public.fee_structures FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "fee_pay_all" ON public.fee_payments; CREATE POLICY "fee_pay_all" ON public.fee_payments FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "transfers_all" ON public.transfers; CREATE POLICY "transfers_all" ON public.transfers FOR ALL TO authenticated USING (public.in_my_school(school_id)) WITH CHECK (public.in_my_school(school_id));
+DROP POLICY IF EXISTS "audit_all" ON public.audit_logs; CREATE POLICY "audit_all" ON public.audit_logs FOR ALL TO authenticated USING (public.is_superadmin() OR public.in_my_school(school_id)) WITH CHECK (public.is_superadmin() OR public.in_my_school(school_id));
