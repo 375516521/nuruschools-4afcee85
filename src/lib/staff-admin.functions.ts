@@ -29,7 +29,7 @@ export const updateStaffAccess = createServerFn({ method: "POST" })
       throw new Error("You can only manage staff in your own school.");
 
     // The target must actually hold that role in this school.
-    const wanted = isSuper ? ["hoi", "teacher"] : ["teacher"];
+    const wanted = (isSuper ? ["hoi", "teacher"] : ["teacher"]) as ("hoi" | "teacher")[];
     const { data: targetRoles } = await context.supabase
       .from("user_roles")
       .select("role")
