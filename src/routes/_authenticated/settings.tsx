@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { NURU } from "@/lib/nuru";
 import { createHoiAccount } from "@/lib/school-admin.functions";
+import { updateStaffAccess } from "@/lib/staff-admin.functions";
 import { TEACHER_MODULES } from "@/lib/access";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -548,26 +549,22 @@ function SettingsInner() {
     },
   });
 
+  const callStaffAccess = useServerFn(updateStaffAccess);
   const saveAccess = useMutation({
     mutationFn: async () => {
       const target = (hoiSchool || schoolId)!;
-      if (!accessUser) throw new Error("Choose the Head of Institution first.");
+      if (!accessUser) throw new Error("Choose the staff member first.");
       if (accessGrades.length === 0) throw new Error("Select at least one grade for this member of staff.");
       if (accessModules.length === 0) throw new Error("Select at least one module for this member of staff.");
-      const { error } = await supabase.from("hoi_access").upsert(
-        {
-          user_id: accessUser,
-          school_id: target,
-          grade_ids: accessGrades,
-          modules: accessModules,
-        },
-        { onConflict: "user_id" },
-      );
-      if (error) throw error;
+      // Saved through the server so role, school and grade permissions are checked before writing.
+      return callStaffAccess({
+        data: { user_id: accessUser, school_id: target, grade_ids: accessGrades, modules: accessModules },
+      });
     },
     onSuccess: () => {
       toast.success("Access rules saved.");
       void qc.invalidateQueries({ queryKey: ["hoi-access"] });
+      void qc.invalidateQueries({ queryKey: ["access-people"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });

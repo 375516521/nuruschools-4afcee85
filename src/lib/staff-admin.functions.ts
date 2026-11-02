@@ -2,6 +2,89 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+const staffAccessSchema = z.object({
+  user_id: z.string().uuid(),
+  school_id: z.string().uuid(),
+  grade_ids: z.array(z.string().uuid()).max(20),
+  modules: z.array(z.string().max(30)).max(20),
+});
+
+/**
+ * Changes which grades and modules a Head of Institution or teacher may work with, without
+ * touching their learning-area links or account state. A super admin may manage any staff
+ * member of the school; a Head of Institution may only manage teachers of their own school
+ * and only hand out grades they themselves hold.
+ */
+export const updateStaffAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => staffAccessSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const [{ data: isSuper, error: roleError }, { data: isHoi }, { data: profile }] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "superadmin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "hoi" }),
+      context.supabase.from("profiles").select("school_id").eq("id", context.userId).maybeSingle(),
+    ]);
+    if (roleError) throw new Error(roleError.message);
+    if (!isSuper && (!isHoi || profile?.school_id !== data.school_id))
+      throw new Error("You can only manage staff in your own school.");
+
+    // The target must actually hold that role in this school.
+    const wanted = (isSuper ? ["hoi", "teacher"] : ["teacher"]) as ("hoi" | "teacher")[];
+    const { data: targetRoles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user_id)
+      .eq("school_id", data.school_id)
+      .in("role", wanted);
+    if (!targetRoles?.length) throw new Error("That person is not on this school's staff.");
+
+    if (data.grade_ids.length === 0 || data.modules.length === 0)
+      throw new Error("Select at least one grade and one module.");
+    const { data: g, error: gErr } = await context.supabase
+      .from("grades")
+      .select("id")
+      .eq("school_id", data.school_id)
+      .in("id", data.grade_ids);
+    if (gErr) throw new Error(gErr.message);
+    if ((g ?? []).length !== new Set(data.grade_ids).size)
+      throw new Error("All grades must belong to this school.");
+    if (!isSuper) {
+      const { data: mine } = await context.supabase
+        .from("hoi_access")
+        .select("grade_ids")
+        .eq("user_id", context.userId)
+        .eq("school_id", data.school_id)
+        .maybeSingle();
+      const allowed = mine?.grade_ids ?? [];
+      if (allowed.length && data.grade_ids.some((id) => !allowed.includes(id)))
+        throw new Error("You can only assign grades you have access to.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("hoi_access").upsert(
+      { user_id: data.user_id, school_id: data.school_id, grade_ids: data.grade_ids, modules: data.modules },
+      { onConflict: "user_id,school_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    // Drop any class-teacher post for grades the person no longer covers.
+    const { error: ctErr } = await supabaseAdmin
+      .from("class_teachers")
+      .delete()
+      .eq("teacher_user_id", data.user_id)
+      .not("grade_id", "in", `(${data.grade_ids.join(",")})`);
+    if (ctErr) throw new Error(ctErr.message);
+
+    await supabaseAdmin.from("audit_logs").insert({
+      school_id: data.school_id,
+      user_id: context.userId,
+      action: "staff_access_updated",
+      entity: "hoi_access",
+      entity_id: data.user_id,
+    });
+    return { ok: true as const };
+  });
+
 const teacherSchema = z.object({
   school_id: z.string().uuid(),
   full_name: z.string().trim().min(2).max(80),
