@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { canUseRoute, useHoiAccess, useSchoolAccess } from "@/lib/access";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -180,7 +180,7 @@ export function AppShell({ title, subtitle, actions, children }: {
         <GraduationCap className="size-5" />
       </div>
       <div className="leading-tight">
-        <p className="font-display text-sm font-bold text-sidebar-foreground">FANISI</p>
+        <p className="font-display text-sm font-bold text-sidebar-foreground">KARLISOFT</p>
         <p className="text-[11px] text-sidebar-foreground/60">Digital Solutions</p>
       </div>
     </div>
@@ -192,7 +192,7 @@ export function AppShell({ title, subtitle, actions, children }: {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col gap-6 bg-nuru-deep p-4 lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col gap-6 bg-karli-deep p-4 lg:flex">
         {brand}
         <NavList />
         <div className="mt-auto space-y-3">
@@ -215,7 +215,7 @@ export function AppShell({ title, subtitle, actions, children }: {
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 bg-nuru-deep p-4">
+            <SheetContent side="left" className="w-64 bg-karli-deep p-4">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               <div className="mb-6">{brand}</div>
               <NavList onNavigate={() => setOpen(false)} />
@@ -239,7 +239,7 @@ export function AppShell({ title, subtitle, actions, children }: {
         <main className="flex-1 px-4 py-6 lg:px-8">{children}</main>
 
         <footer className="no-print border-t border-border px-4 py-4 text-xs text-muted-foreground lg:px-8">
-          {NURU.name} · Support {NURU.email}
+          {KARLI.name} · Support {KARLI.email}
         </footer>
       </div>
     </div>

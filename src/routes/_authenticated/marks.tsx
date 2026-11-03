@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { scoreToLevel } from "@/lib/nuru";
+import { scoreToLevel } from "@/lib/karli";
 
 export const Route = createFileRoute("/_authenticated/marks")({
   component: MarksPage,
@@ -97,7 +97,7 @@ function MarksPage() {
         {save.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save marks
       </Button>}
     >
-      <div className="card-nuru mb-5 grid gap-3 p-5 sm:grid-cols-3">
+      <div className="card-karli mb-5 grid gap-3 p-5 sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label>Exam</Label>
           <Select value={examId} onValueChange={setExamId}>
@@ -126,7 +126,7 @@ function MarksPage() {
       ) : null}
 
       {ready ? (
-        <div className="card-nuru overflow-x-auto">
+        <div className="card-karli overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

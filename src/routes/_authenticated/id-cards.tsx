@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { verifyUrl, NURU } from "@/lib/nuru";
+import { verifyUrl, KARLI } from "@/lib/karli";
 import { SchoolLogo, type SchoolInfo } from "@/components/SchoolLetterhead";
 
 export const Route = createFileRoute("/_authenticated/id-cards")({
@@ -110,7 +110,7 @@ function IdCardsPage() {
       }
     >
       <div className="mb-5 grid gap-4 lg:grid-cols-[280px_1fr] print:hidden">
-        <div className="card-nuru space-y-3 p-5">
+        <div className="card-karli space-y-3 p-5">
           <div className="space-y-1.5">
             <Label>Grade</Label>
             <Select value={gradeId} onValueChange={setGradeId}>
@@ -182,7 +182,7 @@ function IdCardsPage() {
           ) : null}
         </div>
 
-        <div className="card-nuru grid place-items-center p-5 text-center text-sm text-muted-foreground">
+        <div className="card-karli grid place-items-center p-5 text-center text-sm text-muted-foreground">
           {gradeId
             ? `${students?.length ?? 0} active learners ready to print.`
             : "Pick a grade to preview its ID cards."}
@@ -192,14 +192,14 @@ function IdCardsPage() {
       {pages.map((page, pi) => (
         <div
           key={pi}
-          className="card-nuru print-sheet mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 print:mb-0 print:grid-cols-2 print:gap-[4mm] print:break-after-page"
+          className="card-karli print-sheet mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 print:mb-0 print:grid-cols-2 print:gap-[4mm] print:break-after-page"
         >
           {page.map((s) => (
             <article
               key={s.id}
               className="break-inside-avoid overflow-hidden rounded-xl border border-border bg-card shadow-sm print:h-[58mm] print:shadow-none"
             >
-              <header className="id-card-header flex items-center gap-2 bg-nuru-deep px-3 py-2 text-sidebar-foreground">
+              <header className="id-card-header flex items-center gap-2 bg-karli-deep px-3 py-2 text-sidebar-foreground">
                 <SchoolLogo
                   school={school}
                   className="size-9 bg-sidebar-primary text-sidebar-primary-foreground"
@@ -258,7 +258,7 @@ function IdCardsPage() {
                   {school?.uli_code ? ` · ULI ${school.uli_code}` : ""} · Valid{" "}
                   {new Date().getFullYear()}
                 </span>
-                <span>{NURU.name}</span>
+                <span>{KARLI.name}</span>
               </footer>
             </article>
           ))}

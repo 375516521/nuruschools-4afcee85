@@ -285,6 +285,48 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          budgeted_amount: number
+          category: string
+          created_at: string
+          id: string
+          school_id: string
+          term_id: string | null
+        }
+        Insert: {
+          budgeted_amount?: number
+          category: string
+          created_at?: string
+          id?: string
+          school_id: string
+          term_id?: string | null
+        }
+        Update: {
+          budgeted_amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          school_id?: string
+          term_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_items_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_teachers: {
         Row: {
           created_at: string
@@ -639,6 +681,50 @@ export type Database = {
             columns: ["term_id"]
             isOneToOne: false
             referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          school_id: string
+          spent_on: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          school_id: string
+          spent_on?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          school_id?: string
+          spent_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_expenses_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
@@ -1017,6 +1103,44 @@ export type Database = {
           },
         ]
       }
+      notices: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notify_whatsapp: boolean
+          school_id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notify_whatsapp?: boolean
+          school_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notify_whatsapp?: boolean
+          school_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notices_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_events: {
         Row: {
           acknowledged: boolean
@@ -1054,6 +1178,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "password_reset_events_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      petty_cash: {
+        Row: {
+          amount_in: number
+          amount_out: number
+          approved_by: string | null
+          created_at: string
+          description: string
+          entry_date: string
+          id: string
+          school_id: string
+        }
+        Insert: {
+          amount_in?: number
+          amount_out?: number
+          approved_by?: string | null
+          created_at?: string
+          description: string
+          entry_date?: string
+          id?: string
+          school_id: string
+        }
+        Update: {
+          amount_in?: number
+          amount_out?: number
+          approved_by?: string | null
+          created_at?: string
+          description?: string
+          entry_date?: string
+          id?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "petty_cash_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
@@ -1106,6 +1271,114 @@ export type Database = {
             foreignKeyName: "profiles_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scholarships: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          reason: string | null
+          school_id: string
+          student_id: string
+          term_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          school_id: string
+          student_id: string
+          term_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+          school_id?: string
+          student_id?: string
+          term_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scholarships_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scholarships_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scholarships_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_gateway_settings: {
+        Row: {
+          created_at: string
+          id: string
+          mpesa_consumer_key: string | null
+          mpesa_consumer_secret: string | null
+          mpesa_environment: string
+          mpesa_passkey: string | null
+          mpesa_shortcode: string | null
+          mpesa_till: string | null
+          school_id: string
+          updated_at: string
+          whatsapp_api_key: string | null
+          whatsapp_sender: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mpesa_consumer_key?: string | null
+          mpesa_consumer_secret?: string | null
+          mpesa_environment?: string
+          mpesa_passkey?: string | null
+          mpesa_shortcode?: string | null
+          mpesa_till?: string | null
+          school_id: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_sender?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mpesa_consumer_key?: string | null
+          mpesa_consumer_secret?: string | null
+          mpesa_environment?: string
+          mpesa_passkey?: string | null
+          mpesa_shortcode?: string | null
+          mpesa_till?: string | null
+          school_id?: string
+          updated_at?: string
+          whatsapp_api_key?: string | null
+          whatsapp_sender?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_gateway_settings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: true
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
@@ -1192,6 +1465,7 @@ export type Database = {
           hoi_name: string | null
           hoi_phone: string | null
           id: string
+          id_card_valid_until: string | null
           is_active: boolean
           logo_url: string | null
           modules: Json
@@ -1210,6 +1484,7 @@ export type Database = {
           hoi_name?: string | null
           hoi_phone?: string | null
           id?: string
+          id_card_valid_until?: string | null
           is_active?: boolean
           logo_url?: string | null
           modules?: Json
@@ -1228,6 +1503,7 @@ export type Database = {
           hoi_name?: string | null
           hoi_phone?: string | null
           id?: string
+          id_card_valid_until?: string | null
           is_active?: boolean
           logo_url?: string | null
           modules?: Json
@@ -1630,6 +1906,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vouchers: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          issued_on: string
+          payee: string
+          school_id: string
+          status: string
+          voucher_no: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          issued_on?: string
+          payee: string
+          school_id: string
+          status?: string
+          voucher_no: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          issued_on?: string
+          payee?: string
+          school_id?: string
+          status?: string
+          voucher_no?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vouchers_school_id_fkey"
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"

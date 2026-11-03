@@ -17,19 +17,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { logAudit } from "@/lib/audit";
-import { ksh } from "@/lib/nuru";
+import { ksh } from "@/lib/karli";
 
 export const Route = createFileRoute("/_authenticated/promotions")({
   component: PromotionsPage,
   head: () => ({
     meta: [
-      { title: "Promote learners & roll over terms | Fanisi" },
+      { title: "Promote learners & roll over terms | Karlisoft" },
       {
         name: "description",
         content:
           "Move a whole grade to the next class, graduate finalists and switch the school to the next term in one place.",
       },
-      { property: "og:title", content: "Promote learners & roll over terms | Fanisi" },
+      { property: "og:title", content: "Promote learners & roll over terms | Karlisoft" },
       {
         property: "og:description",
         content: "Bulk class promotion, graduation and term rollover for your school.",
@@ -48,7 +48,7 @@ function PromotionsPage() {
   if (session && !roles.includes("superadmin") && !roles.includes("hoi")) {
     return (
       <AppShell title="Promotions & term rollover">
-        <div className="card-nuru p-5 text-sm text-muted-foreground">
+        <div className="card-karli p-5 text-sm text-muted-foreground">
           Only the Head of Institution or super admin can promote learners or change the term.
         </div>
       </AppShell>
@@ -257,7 +257,7 @@ function PromotionsInner() {
     >
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <div className="space-y-5">
-          <section className="card-nuru space-y-3 p-5">
+          <section className="card-karli space-y-3 p-5">
             <h2 className="font-display font-semibold">Move learners up</h2>
             <div className="space-y-1.5">
               <Label>Current class</Label>
@@ -337,7 +337,7 @@ function PromotionsInner() {
             </p>
           </section>
 
-          <section className="card-nuru space-y-3 p-5">
+          <section className="card-karli space-y-3 p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <CalendarRange className="size-4" /> Term rollover
             </h2>
@@ -395,7 +395,7 @@ function PromotionsInner() {
           </section>
         </div>
 
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           {!fromGrade ? (
             <p className="text-sm text-muted-foreground">
               Pick a class on the left to list its learners.

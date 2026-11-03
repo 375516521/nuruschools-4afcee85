@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
-import { scoreToLevel } from "@/lib/nuru";
+import { scoreToLevel } from "@/lib/karli";
 import { DEFAULT_SCALE, bandFor, parseScale, type GradeBand } from "@/lib/grading";
 import { useAllowedGrades, useHoiAccess , onlyMySubjects } from "@/lib/access";
 import { logAudit } from "@/lib/audit";
@@ -322,7 +322,7 @@ function ExamsPage() {
         </Button>
       }
     >
-      <div className="card-nuru mb-5 grid gap-3 p-4 no-print sm:grid-cols-4">
+      <div className="card-karli mb-5 grid gap-3 p-4 no-print sm:grid-cols-4">
         <div className="space-y-1.5">
           <Label>Grade</Label>
           <Select value={gradeId} onValueChange={(v) => { setGradeId(v); setExamId("all"); }}>
@@ -370,7 +370,7 @@ function ExamsPage() {
       </div>
 
       {gradeId ? (
-        <div className="card-nuru mb-5 p-4 no-print">
+        <div className="card-karli mb-5 p-4 no-print">
           <p className="mb-3 text-sm font-semibold">Exams for {gradeLabel} this term</p>
           <div className="grid gap-2">
             {gradeExams.map((e) => (
@@ -400,7 +400,7 @@ function ExamsPage() {
       ) : null}
 
       {gradeId ? (
-        <div className="card-nuru mb-5 p-4 no-print">
+        <div className="card-karli mb-5 p-4 no-print">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold">Marks grid</p>
@@ -584,11 +584,11 @@ function ExamsPage() {
       ) : null}
 
       {!gradeId ? (
-        <div className="card-nuru grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground">
+        <div className="card-karli grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground">
           <BarChart3 className="size-6" /> Choose a grade to see the exam analysis.
         </div>
       ) : (
-        <div className="card-nuru print-sheet p-6">
+        <div className="card-karli print-sheet p-6">
           <SchoolLetterhead
             school={school}
             documentTitle="Exam performance analysis"

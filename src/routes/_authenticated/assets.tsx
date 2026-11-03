@@ -29,7 +29,7 @@ import {
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 import { fileToDataUrl } from "@/lib/image-upload";
 import { logAudit } from "@/lib/audit";
-import { ksh } from "@/lib/nuru";
+import { ksh } from "@/lib/karli";
 
 export const Route = createFileRoute("/_authenticated/assets")({
   component: AssetsPage,
@@ -223,7 +223,7 @@ function AssetsPage() {
         </>
       }
     >
-      <div className="card-nuru mb-5 grid gap-3 p-4 no-print sm:grid-cols-3">
+      <div className="card-karli mb-5 grid gap-3 p-4 no-print sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label>Search</Label>
           <Input placeholder="Name, tag, serial, location" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -250,7 +250,7 @@ function AssetsPage() {
         </div>
       </div>
 
-      <div className="card-nuru print-sheet p-6">
+      <div className="card-karli print-sheet p-6">
         <SchoolLetterhead
           school={school}
           documentTitle="School assets register"

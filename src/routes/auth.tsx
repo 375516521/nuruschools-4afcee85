@@ -10,14 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
 import { signInWithUsername } from "@/lib/login.functions";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Staff Sign In — Fanisi Digital Solutions" },
-      { name: "description", content: "Secure sign in for school heads, teachers and administrators using the Fanisi Digital Solutions school management system." },
-      { property: "og:title", content: "Staff Sign In — Fanisi Digital Solutions" },
+      { title: "Staff Sign In — Karlisoft" },
+      { name: "description", content: "Secure sign in for school heads, teachers and administrators using the Karlisoft school management system." },
+      { property: "og:title", content: "Staff Sign In — Karlisoft" },
       { property: "og:description", content: "Secure sign in for school heads, teachers and administrators." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -97,16 +97,16 @@ function AuthPage() {
 
 
   return (
-    <div className="grid min-h-screen bg-nuru-hero px-4 py-10 place-items-center">
+    <div className="grid min-h-screen bg-karli-hero px-4 py-10 place-items-center">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2.5">
           <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </div>
-          <span className="font-display text-lg font-bold">FANISI DIGITAL SOLUTIONS</span>
+          <span className="font-display text-lg font-bold">KARLISOFT</span>
         </Link>
 
-        <div className="card-nuru p-6">
+        <div className="card-karli p-6">
           <div>
             <h1 className="font-display text-lg font-semibold">Staff sign in</h1>
             <p className="text-sm text-muted-foreground">Accounts are created by your super admin or Head of Institution.</p>
@@ -157,7 +157,7 @@ function AuthPage() {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Parent? <Link to="/parent" className="font-medium text-primary">Check your child's progress</Link> — no login required.
         </p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">Support: {NURU.email}</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Support: {KARLI.email}</p>
       </div>
     </div>
   );

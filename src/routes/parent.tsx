@@ -10,14 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { NURU, ksh, scoreToLevel } from "@/lib/nuru";
+import { KARLI, ksh, scoreToLevel } from "@/lib/karli";
 
 export const Route = createFileRoute("/parent")({
   head: () => ({
     meta: [
-      { title: "Parent Portal — Check Fees & Results | Fanisi Digital Solutions" },
+      { title: "Parent Portal — Check Fees & Results | Karlisoft" },
       { name: "description", content: "Parents: check your child's term fees balance, latest CBE results and download their report card or ID card. No login or OTP required." },
-      { property: "og:title", content: "Parent Portal — Fanisi Digital Solutions" },
+      { property: "og:title", content: "Parent Portal — Karlisoft" },
       { property: "og:description", content: "Check fees, results and attendance instantly with an admission number or your phone number." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -69,7 +69,7 @@ function ParentPage() {
   if (summary) return <Dashboard summary={summary} onBack={() => setSummary(null)} />;
 
   return (
-    <div className="grid min-h-screen place-items-center bg-nuru-hero px-4 py-10">
+    <div className="grid min-h-screen place-items-center bg-karli-hero px-4 py-10">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2.5">
           <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
@@ -78,7 +78,7 @@ function ParentPage() {
           <span className="font-display text-lg font-bold">Parent Portal</span>
         </Link>
 
-        <div className="card-nuru p-6">
+        <div className="card-karli p-6">
           {matches ? (
             <div>
               <h2 className="font-display font-semibold">Select your child</h2>
@@ -116,7 +116,7 @@ function ParentPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          No password needed. USSD coming soon: dial *483*SCHOOLCODE#.<br />Help: {NURU.email}
+          No password needed. USSD coming soon: dial *483*SCHOOLCODE#.<br />Help: {KARLI.email}
         </p>
       </div>
     </div>
@@ -134,7 +134,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-nuru-deep px-4 py-6">
+      <header className="bg-karli-deep px-4 py-6">
         <div className="mx-auto max-w-2xl">
           <Button variant="ghost" size="sm" onClick={onBack} className="mb-3 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground">
             <ArrowLeft className="size-4" /> Search again
@@ -149,7 +149,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
       </header>
 
       <main className="mx-auto max-w-2xl space-y-5 px-4 py-6">
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           <h2 className="mb-3 flex items-center gap-2 font-display font-semibold"><Wallet className="size-4 text-primary" /> Term fees</h2>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div><p className="text-xs text-muted-foreground">Billed</p><p className="font-display font-bold">{ksh(billed)}</p></div>
@@ -158,7 +158,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
           </div>
         </section>
 
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           <h2 className="mb-3 flex items-center gap-2 font-display font-semibold">
             {unlocked ? <BookOpen className="size-4 text-primary" /> : <Lock className="size-4 text-destructive" />} Latest results
           </h2>
@@ -170,7 +170,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
                 term's results, report card and ID card. Payments reflect here immediately once the school records them.
               </p>
               <Button className="mt-3" variant="outline" asChild>
-                <a href={`mailto:${NURU.email}`} target="_blank" rel="noreferrer">Contact support by email</a>
+                <a href={`mailto:${KARLI.email}`} target="_blank" rel="noreferrer">Contact support by email</a>
               </Button>
             </div>
           ) : results.length === 0 ? (
@@ -196,7 +196,7 @@ function Dashboard({ summary, onBack }: { summary: Record<string, unknown>; onBa
           </div>
         ) : null}
 
-        <p className="pb-6 text-center text-xs text-muted-foreground">Questions? Email {NURU.email}</p>
+        <p className="pb-6 text-center text-xs text-muted-foreground">Questions? Email {KARLI.email}</p>
       </main>
     </div>
   );
