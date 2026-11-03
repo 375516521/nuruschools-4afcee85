@@ -6,15 +6,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 export const Route = createFileRoute("/verify/$adm")({
   head: ({ params }) => ({
     meta: [
-      { title: `Verify learner ${params.adm} — Fanisi Digital Solutions` },
-      { name: "description", content: `Public verification of student ID card and admission number ${params.adm} issued through the Fanisi Digital Solutions school management system.` },
+      { title: `Verify learner ${params.adm} — Karlisoft` },
+      { name: "description", content: `Public verification of student ID card and admission number ${params.adm} issued through the Karlisoft school management system.` },
       { property: "og:title", content: `Verify learner ${params.adm}` },
-      { property: "og:description", content: "Scan-to-verify student identity card issued by a Fanisi Digital Solutions school." },
+      { property: "og:description", content: "Scan-to-verify student identity card issued by a Karlisoft school." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -35,16 +35,16 @@ function VerifyPage() {
   });
 
   return (
-    <div className="grid min-h-screen place-items-center bg-nuru-hero px-4 py-10">
+    <div className="grid min-h-screen place-items-center bg-karli-hero px-4 py-10">
       <div className="w-full max-w-sm">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2.5">
           <div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </div>
-          <span className="font-display font-bold">FANISI DIGITAL SOLUTIONS</span>
+          <span className="font-display font-bold">KARLISOFT</span>
         </Link>
 
-        <div className="card-nuru overflow-hidden">
+        <div className="card-karli overflow-hidden">
           {isLoading ? (
             <div className="space-y-3 p-6"><Skeleton className="h-24 w-24 rounded-full" /><Skeleton className="h-5 w-40" /><Skeleton className="h-4 w-28" /></div>
           ) : !data ? (
@@ -55,7 +55,7 @@ function VerifyPage() {
             </div>
           ) : (
             <>
-              <div className="bg-nuru-deep p-5 text-center">
+              <div className="bg-karli-deep p-5 text-center">
                 <p className="text-xs uppercase tracking-widest text-sidebar-foreground/60">{data.school_name}</p>
                 <p className="font-display text-sm font-semibold text-sidebar-primary">{data.school_code}</p>
               </div>
@@ -90,7 +90,7 @@ function VerifyPage() {
 
         <div className="mt-5 text-center">
           <Button asChild variant="outline" size="sm"><Link to="/parent">Parent portal</Link></Button>
-          <p className="mt-3 text-xs text-muted-foreground">Report a suspicious card: {NURU.email}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Report a suspicious card: {KARLI.email}</p>
         </div>
       </div>
     </div>

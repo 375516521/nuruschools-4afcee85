@@ -7,7 +7,7 @@ import { AppShell, useSession, useActiveTerm } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ksh } from "@/lib/nuru";
+import { ksh } from "@/lib/karli";
 import { useHoiAccess, canUseRoute, useSchoolAccess } from "@/lib/access";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -57,7 +57,7 @@ function DashboardPage() {
   return (
     <AppShell title={school?.name ?? "Dashboard"} subtitle={`${termLabel} · ${roles.join(", ") || "no role assigned"}`}>
       {!schoolId ? (
-        <div className="card-nuru flex items-start gap-3 p-5">
+        <div className="card-karli flex items-start gap-3 p-5">
           <AlertCircle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div>
             <h2 className="font-display font-semibold">You are not attached to a school yet</h2>
@@ -77,7 +77,7 @@ function DashboardPage() {
         <StatCard icon={TrendingUp} label="Collection rate" value={`${pct}%`} sub={pct >= 80 ? "On track" : "Follow up defaulters"} />
       </div>
 
-      <section className="card-nuru mt-5 p-5">
+      <section className="card-karli mt-5 p-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display font-semibold">Fee collection — {termLabel}</h2>
           <Badge variant={pct >= 80 ? "default" : "secondary"}>{pct}%</Badge>
@@ -94,7 +94,7 @@ function DashboardPage() {
         ]
           .filter((c) => canUseRoute(c.to, isSuper, access ?? null, roles, schoolAccess ?? null))
           .map((c) => (
-          <Link key={c.to} to={c.to} className="card-nuru group p-5 transition-colors hover:border-primary">
+          <Link key={c.to} to={c.to} className="card-karli group p-5 transition-colors hover:border-primary">
             <h3 className="flex items-center gap-2 font-display font-semibold">
               {c.title} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </h3>
@@ -110,7 +110,7 @@ function StatCard({ icon: Icon, label, value, sub }: {
   icon: typeof Users; label: string; value: string; sub: string;
 }) {
   return (
-    <div className="card-nuru p-5">
+    <div className="card-karli p-5">
       <div className="mb-3 grid size-9 place-items-center rounded-lg bg-secondary text-primary">
         <Icon className="size-4" />
       </div>

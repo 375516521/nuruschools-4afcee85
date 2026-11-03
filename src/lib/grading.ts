@@ -1,4 +1,4 @@
-import { GRADING_SCALE } from "@/lib/nuru";
+import { GRADING_SCALE } from "@/lib/karli";
 
 export type GradeBand = { code: string; label: string; min: number; max: number };
 

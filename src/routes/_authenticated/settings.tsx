@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 import { createHoiAccount } from "@/lib/school-admin.functions";
 import { updateStaffAccess } from "@/lib/staff-admin.functions";
 import { TEACHER_MODULES } from "@/lib/access";
@@ -71,7 +71,7 @@ function SettingsPage() {
   if (s0 && !r0.includes("superadmin") && !r0.includes("hoi")) {
     return (
       <AppShell title="Settings">
-        <div className="card-nuru p-5 text-sm text-muted-foreground">
+        <div className="card-karli p-5 text-sm text-muted-foreground">
           Only the Head of Institution or super admin can open Settings.
         </div>
       </AppShell>
@@ -580,7 +580,7 @@ function SettingsInner() {
         </TabsList>
         <TabsContent value="school" className="mt-4">
           <div className="grid gap-5 lg:grid-cols-2">
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           <h2 className="flex items-center gap-2 font-display font-semibold">
             <School className="size-4 text-primary" /> Your school
           </h2>
@@ -626,7 +626,7 @@ function SettingsInner() {
           ) : null}
         </section>
         {schoolId && isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <School className="size-4 text-primary" /> School profile & branding
             </h2>
@@ -707,7 +707,7 @@ function SettingsInner() {
           </section>
         ) : null}
         {schoolId && isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <Layers className="size-4 text-primary" /> Streams per class
             </h2>
@@ -767,7 +767,7 @@ function SettingsInner() {
           </section>
         ) : null}
         {schoolId && isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <BookOpen className="size-4 text-primary" /> Learning areas (subjects)
             </h2>
@@ -842,7 +842,7 @@ function SettingsInner() {
         <TabsContent value="academic" className="mt-4">
           <div className="grid gap-5 lg:grid-cols-2">
         {schoolId && isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <CalendarRange className="size-4 text-primary" /> Academic years & terms
             </h2>
@@ -892,7 +892,7 @@ function SettingsInner() {
             </div>
           </section>
         ) : null}
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           <h2 className="font-display font-semibold">Exams for the active term</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Create the assessments teachers will enter marks against.
@@ -942,7 +942,7 @@ function SettingsInner() {
         </TabsContent>
         <TabsContent value="staff" className="mt-4">
           <div className="grid gap-5 lg:grid-cols-2">
-        <section className="card-nuru p-5 lg:col-span-2">
+        <section className="card-karli p-5 lg:col-span-2">
           <h2 className="font-display font-semibold">Who can do what</h2>
           <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
             <div className="rounded-lg border border-border p-3">
@@ -960,7 +960,7 @@ function SettingsInner() {
           </div>
         </section>
         {isSuper ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <Plus className="size-4 text-primary" /> Create a school
             </h2>
@@ -993,7 +993,7 @@ function SettingsInner() {
           </section>
         ) : null}
         {isSuper ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <UserPlus className="size-4 text-primary" /> Assign a Head of Institution
             </h2>
@@ -1057,7 +1057,7 @@ function SettingsInner() {
           </section>
         ) : null}
         {schoolId && isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <Users className="size-4 text-primary" /> Teacher accounts
             </h2>
@@ -1071,7 +1071,7 @@ function SettingsInner() {
           </section>
         ) : null}
         {isAdmin ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <ShieldCheck className="size-4 text-primary" /> Change a staff member's classes &amp; modules
             </h2>
@@ -1144,7 +1144,7 @@ function SettingsInner() {
         <TabsContent value="account" className="mt-4">
           <div className="grid gap-5 lg:grid-cols-2">
         {profile?.id ? (
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <PenLine className="size-4 text-primary" /> My digital signature
             </h2>
@@ -1185,10 +1185,10 @@ function SettingsInner() {
             </Button>
           </section>
         ) : null}
-        <section className="card-nuru p-5">
+        <section className="card-karli p-5">
           <h2 className="font-display font-semibold">Support</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Email {NURU.email}
+            Email {KARLI.email}
           </p>
         </section>
           </div>

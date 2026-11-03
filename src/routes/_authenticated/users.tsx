@@ -192,7 +192,7 @@ function UsersPage() {
   if (!isSuper) {
     return (
       <AppShell title="Users & Schools">
-        <div className="card-nuru p-6">
+        <div className="card-karli p-6">
           <p className="text-sm text-muted-foreground">
             Only the super admin can manage user accounts and schools.
           </p>
@@ -215,7 +215,7 @@ function UsersPage() {
       }
     >
       <div className="grid gap-5 lg:grid-cols-3">
-        <section className="card-nuru p-5 lg:col-span-3">
+        <section className="card-karli p-5 lg:col-span-3">
           <h2 className="flex items-center gap-2 font-display font-semibold">
             <ShieldCheck className="size-4 text-primary" /> User directory
           </h2>
@@ -354,7 +354,7 @@ function UsersPage() {
         </section>
 
         <div className="grid gap-5 lg:col-span-3 lg:grid-cols-2">
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <School className="size-4 text-primary" /> Schools
             </h2>
@@ -394,7 +394,7 @@ function UsersPage() {
             </div>
           </section>
 
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <BellRing className="size-4 text-primary" /> Password reset alerts
             </h2>

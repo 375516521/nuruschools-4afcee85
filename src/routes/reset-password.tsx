@@ -8,19 +8,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Set a New Password — Fanisi Digital Solutions" },
+      { title: "Set a New Password — Karlisoft" },
       {
         name: "description",
         content:
-          "Choose a new password for your Fanisi Digital Solutions school account after requesting a reset link.",
+          "Choose a new password for your Karlisoft school account after requesting a reset link.",
       },
-      { property: "og:title", content: "Set a New Password — Fanisi Digital Solutions" },
+      { property: "og:title", content: "Set a New Password — Karlisoft" },
       { property: "og:description", content: "Choose a new password for your school account." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -80,16 +80,16 @@ function ResetPasswordPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-nuru-hero px-4 py-10">
+    <div className="grid min-h-screen place-items-center bg-karli-hero px-4 py-10">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 flex items-center justify-center gap-2.5">
           <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
             <GraduationCap className="size-5" />
           </div>
-          <span className="font-display text-lg font-bold">FANISI DIGITAL SOLUTIONS</span>
+          <span className="font-display text-lg font-bold">KARLISOFT</span>
         </Link>
 
-        <div className="card-nuru p-6">
+        <div className="card-karli p-6">
           <h1 className="flex items-center gap-2 font-display text-lg font-bold">
             <KeyRound className="size-4 text-primary" /> Set a new password
           </h1>
@@ -132,7 +132,7 @@ function ResetPasswordPage() {
             </Link>
           </p>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">Support: {NURU.email}</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">Support: {KARLI.email}</p>
       </div>
     </div>
   );

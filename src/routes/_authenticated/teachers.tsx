@@ -26,9 +26,9 @@ export const Route = createFileRoute("/_authenticated/teachers")({
   component: TeachersPage,
   head: () => ({
     meta: [
-      { title: "Teachers & class teachers | Fanisi" },
+      { title: "Teachers & class teachers | Karlisoft" },
       { name: "description", content: "Create teacher logins, assign classes, learning areas, modules and class teachers." },
-      { property: "og:title", content: "Teachers & class teachers | Fanisi" },
+      { property: "og:title", content: "Teachers & class teachers | Karlisoft" },
       { property: "og:description", content: "Manage teacher accounts and class teachers for your school." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -46,7 +46,7 @@ function TeachersPage() {
   if (session && !roles.includes("superadmin") && !roles.includes("hoi")) {
     return (
       <AppShell title="Teachers">
-        <div className="card-nuru p-5 text-sm text-muted-foreground">
+        <div className="card-karli p-5 text-sm text-muted-foreground">
           Only the Head of Institution or super admin can manage teachers.
         </div>
       </AppShell>
@@ -212,10 +212,10 @@ function TeachersInner() {
   return (
     <AppShell title="Teachers" subtitle="Teacher logins, classes, learning areas, modules and class teachers">
       {!schoolId ? (
-        <div className="card-nuru p-5 text-sm text-muted-foreground">Choose a school first using the school switcher.</div>
+        <div className="card-karli p-5 text-sm text-muted-foreground">Choose a school first using the school switcher.</div>
       ) : (
         <div className="grid gap-5 lg:grid-cols-2">
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <UserPlus className="size-4 text-primary" /> Create a teacher
             </h2>
@@ -293,7 +293,7 @@ function TeachersInner() {
             </form>
           </section>
 
-          <section className="card-nuru p-5">
+          <section className="card-karli p-5">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <Star className="size-4 text-primary" /> Class teachers
             </h2>
@@ -327,7 +327,7 @@ function TeachersInner() {
             </div>
           </section>
 
-          <section className="card-nuru p-5 lg:col-span-2">
+          <section className="card-karli p-5 lg:col-span-2">
             <h2 className="flex items-center gap-2 font-display font-semibold">
               <ShieldCheck className="size-4 text-primary" /> Teachers in this school
             </h2>

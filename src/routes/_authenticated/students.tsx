@@ -446,7 +446,7 @@ function StudentsPage() {
         </Select>
       </div>
 
-      <div className="card-nuru overflow-x-auto">
+      <div className="card-karli overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

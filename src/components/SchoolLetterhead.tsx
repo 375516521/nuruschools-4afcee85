@@ -1,5 +1,5 @@
 import { GraduationCap } from "lucide-react";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 export type SchoolInfo = {
   name?: string | null;
@@ -64,7 +64,7 @@ export function SchoolLetterhead({
       <SchoolLogo school={school} />
       <div className="min-w-0 flex-1">
         <p className="font-display text-xl leading-tight font-bold tracking-tight uppercase">
-          {school?.name ?? NURU.name}
+          {school?.name ?? KARLI.name}
         </p>
         {contact ? <p className="text-[11px] text-muted-foreground">{contact}</p> : null}
         <p className="mt-1 inline-block rounded bg-secondary px-2 py-0.5 text-[11px] font-semibold tracking-widest uppercase text-primary">
@@ -85,7 +85,7 @@ export function SchoolLetterhead({
 export function DocFooter({ note }: { note?: string }) {
   return (
     <p className="mt-4 border-t border-dashed border-border pt-2 text-[10px] text-muted-foreground">
-      {note ? `${note} · ` : ""}Powered by {NURU.name} · {NURU.email}
+      {note ? `${note} · ` : ""}Powered by {KARLI.name} · {KARLI.email}
     </p>
   );
 }

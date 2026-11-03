@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ksh, NURU } from "@/lib/nuru";
+import { ksh, KARLI } from "@/lib/karli";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 import { logAudit } from "@/lib/audit";
 
@@ -215,7 +215,7 @@ function FeesPage() {
   ) {
     const phone = (s.guardian_phone ?? "").replace(/\D/g, "").replace(/^0/, "254");
     const text = encodeURIComponent(
-      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}, ${gradeLabel(s)}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? NURU.name}`,
+      `Dear Parent/Guardian, ${s.first_name} ${s.last_name} (Adm ${s.adm_no}, ${gradeLabel(s)}) has an outstanding fee balance of ${ksh(balance)} for ${termLabel}. Kindly clear to unlock results and the ID card. — ${school?.name ?? KARLI.name}`,
     );
     return phone ? `https://wa.me/${phone}?text=${text}` : null;
   }
@@ -527,7 +527,7 @@ function FeesPage() {
         </>
       }
     >
-      <div className="card-nuru overflow-x-auto">
+      <div className="card-karli overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -589,7 +589,7 @@ function FeesPage() {
       </div>
 
       {(discounts ?? []).length > 0 ? (
-        <div className="card-nuru mt-5 overflow-x-auto">
+        <div className="card-karli mt-5 overflow-x-auto">
           <div className="border-b border-border p-4">
             <p className="font-display text-sm font-semibold">Discounts this term</p>
           </div>
@@ -652,7 +652,7 @@ function FeesPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="card-nuru mt-5 overflow-x-auto">
+      <div className="card-karli mt-5 overflow-x-auto">
         <div className="border-b border-border p-4">
           <p className="font-display text-sm font-semibold">Payments this term</p>
           <p className="text-xs text-muted-foreground">Reprint any receipt at any time.</p>

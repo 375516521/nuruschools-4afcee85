@@ -36,6 +36,13 @@
       "when": 1791275952851,
       "tag": "0004_hoi_access_school_admin_read",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793683775988,
+      "tag": "0005_karlisoft_phase1_gateways_finance_notices",
+      "breakpoints": true
     }
   ]
 }

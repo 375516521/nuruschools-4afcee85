@@ -6,15 +6,15 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { NURU } from "@/lib/nuru";
+import { KARLI } from "@/lib/karli";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fanisi Digital Solutions — CBE School Management System for Kenya" },
-      { name: "description", content: "Fanisi Digital Solutions runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
-      { property: "og:title", content: "Fanisi Digital Solutions — CBE School Management System for Kenya" },
-      { property: "og:description", content: "Fanisi Digital Solutions runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { title: "Karlisoft — CBE School Management System for Kenya" },
+      { name: "description", content: "Karlisoft runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
+      { property: "og:title", content: "Karlisoft — CBE School Management System for Kenya" },
+      { property: "og:description", content: "Karlisoft runs your whole school: CBE assessment, auto admission numbers, QR student ID cards, fees & MPESA reconciliation, parent access and AI reports." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,7 +40,7 @@ function Landing() {
             <GraduationCap className="size-5" />
           </div>
           <div className="mr-auto leading-tight">
-            <p className="font-display text-sm font-bold">FANISI</p>
+            <p className="font-display text-sm font-bold">KARLISOFT</p>
             <p className="text-[11px] text-muted-foreground">Digital Solutions</p>
           </div>
           <Button asChild variant="ghost" size="sm"><Link to="/parent">Parents</Link></Button>
@@ -48,15 +48,15 @@ function Landing() {
         </div>
       </header>
 
-      <section className="bg-nuru-hero">
+      <section className="bg-karli-hero">
         <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
           <Badge variant="secondary" className="mb-5 gap-1.5">
             <Sparkles className="size-3" /> Built for the Kenyan CBE (Competency Based Education) curriculum
           </Badge>
           <h1 className="max-w-3xl font-display text-4xl leading-[1.1] font-extrabold tracking-tight md:text-6xl">
-            One system to run your <span className="text-nuru-gradient">entire school</span>.
+            One system to run your <span className="text-karli-gradient">entire school</span>.
           </h1>
-          <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">{NURU.tagline}. From admission number to graduation — admissions, CBE assessment, QR ID cards, fees, parent access and AI-powered reports.</p>
+          <p className="mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">{KARLI.tagline}. From admission number to graduation — admissions, CBE assessment, QR ID cards, fees, parent access and AI-powered reports.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg"><Link to="/auth">Open the school dashboard <ArrowRight className="size-4" /></Link></Button>
             <Button asChild size="lg" variant="outline"><Link to="/parent">I'm a parent</Link></Button>
@@ -76,7 +76,7 @@ function Landing() {
         <h2 className="font-display text-2xl font-bold md:text-3xl">Everything a school actually needs</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, title, body }) => (
-            <article key={title} className="card-nuru p-5">
+            <article key={title} className="card-karli p-5">
               <div className="mb-3 grid size-10 place-items-center rounded-lg bg-secondary text-primary">
                 <Icon className="size-5" />
               </div>
@@ -87,7 +87,7 @@ function Landing() {
         </div>
       </section>
 
-      <section className="bg-nuru-deep py-16 md:py-20">
+      <section className="bg-karli-deep py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="font-display text-2xl font-bold text-sidebar-foreground md:text-3xl">
             The <span className="text-sidebar-primary">ID card engine</span>, done properly
@@ -110,12 +110,12 @@ function Landing() {
 
       <footer className="border-t border-border bg-secondary/40">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center">
-          <p className="mr-auto font-display font-semibold">{NURU.name}</p>
-          <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-            <MessageCircle className="size-4" /> {NURU.email}
+          <p className="mr-auto font-display font-semibold">{KARLI.name}</p>
+          <a href={`mailto:${KARLI.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+            <MessageCircle className="size-4" /> {KARLI.email}
           </a>
-          <a href={`mailto:${NURU.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-            <Mail className="size-4" /> {NURU.email}
+          <a href={`mailto:${KARLI.email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+            <Mail className="size-4" /> {KARLI.email}
           </a>
         </div>
       </footer>

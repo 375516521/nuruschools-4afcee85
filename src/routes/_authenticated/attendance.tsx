@@ -159,7 +159,7 @@ function AttendancePage() {
         </>
       }
     >
-      <div className="card-nuru mb-5 grid gap-3 p-4 no-print sm:grid-cols-3">
+      <div className="card-karli mb-5 grid gap-3 p-4 no-print sm:grid-cols-3">
         <div className="space-y-1.5">
           <Label>Grade</Label>
           <Select value={gradeId} onValueChange={setGradeId}>
@@ -205,11 +205,11 @@ function AttendancePage() {
       ) : null}
 
       {!gradeId ? (
-        <div className="card-nuru grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground">
+        <div className="card-karli grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground">
           <CalendarCheck className="size-6" /> Choose a grade and date to open the register.
         </div>
       ) : (
-        <div className="card-nuru print-sheet p-6">
+        <div className="card-karli print-sheet p-6">
           <SchoolLetterhead
             school={school}
             documentTitle="Daily attendance register"

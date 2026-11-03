@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { scoreToLevel } from "@/lib/nuru";
+import { scoreToLevel } from "@/lib/karli";
 import { classTeacherComment, headTeacherComment } from "@/lib/report-comments";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 
@@ -280,7 +280,7 @@ function ReportsPage() {
         </>
       }
     >
-      <div className="card-nuru mb-5 grid gap-4 p-4 no-print sm:grid-cols-2 lg:grid-cols-4">
+      <div className="card-karli mb-5 grid gap-4 p-4 no-print sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5">
           <Label>Academic year</Label>
           <Select
@@ -357,14 +357,14 @@ function ReportsPage() {
       </div>
 
       {!ready ? (
-        <div className="card-nuru grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground no-print">
+        <div className="card-karli grid place-items-center gap-2 p-10 text-center text-sm text-muted-foreground no-print">
           <FileText className="size-6" />
           {gradeId && termId
             ? "No exams recorded for this grade and term yet."
             : "Choose a year, term and grade to build report cards."}
         </div>
       ) : view === "merit" ? (
-        <div className="card-nuru print-sheet p-6">
+        <div className="card-karli print-sheet p-6">
           <SchoolLetterhead
             school={school}
             documentTitle="Class merit list"
@@ -429,7 +429,7 @@ function ReportsPage() {
           {shown.map((s) => {
             const { subjects, mean } = cardFor(s.id);
             return (
-              <div key={s.id} className="card-nuru print-sheet break-after-page p-6">
+              <div key={s.id} className="card-karli print-sheet break-after-page p-6">
                 <SchoolLetterhead
                   school={school}
                   documentTitle="CBE Learner Report Card"

@@ -231,7 +231,7 @@ function LibraryPage() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search title, author or ISBN" className="pl-9" />
       </div>
 
-      <div className="card-nuru mb-6 overflow-x-auto">
+      <div className="card-karli mb-6 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -280,7 +280,7 @@ function LibraryPage() {
       </div>
 
       <h2 className="mb-2 font-display font-semibold">Books currently out</h2>
-      <div className="card-nuru overflow-x-auto">
+      <div className="card-karli overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

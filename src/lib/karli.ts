@@ -1,7 +1,7 @@
-export const NURU = {
-  name: "Fanisi Digital Solutions",
+export const KARLI = {
+  name: "Karlisoft",
   tagline: "The complete CBE school management system for Kenyan schools",
-  email: "fanisitechsoftwares@gmail.com",
+  email: "karlisoftwares@gmail.com",
 } as const;
 
 export const GRADING_SCALE = [

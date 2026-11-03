@@ -75,7 +75,7 @@ export function LearnerImport({
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Learners");
-    XLSX.writeFile(wb, "nuru-learner-import-template.xlsx");
+    XLSX.writeFile(wb, "karli-learner-import-template.xlsx");
   }
 
   async function readFile(file: File) {
