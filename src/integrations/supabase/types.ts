@@ -500,6 +500,44 @@ export type Database = {
           },
         ]
       }
+      families: {
+        Row: {
+          created_at: string
+          fam_no: string
+          id: string
+          primary_phone: string | null
+          school_id: string
+          sibling_discount_type: string
+          sibling_discount_value: number
+        }
+        Insert: {
+          created_at?: string
+          fam_no: string
+          id?: string
+          primary_phone?: string | null
+          school_id: string
+          sibling_discount_type?: string
+          sibling_discount_value?: number
+        }
+        Update: {
+          created_at?: string
+          fam_no?: string
+          id?: string
+          primary_phone?: string | null
+          school_id?: string
+          sibling_discount_type?: string
+          sibling_discount_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "families_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fee_discounts: {
         Row: {
           amount: number
@@ -561,6 +599,7 @@ export type Database = {
       fee_payments: {
         Row: {
           amount: number
+          family_code: string | null
           id: string
           method: Database["public"]["Enums"]["payment_method"]
           paid_at: string
@@ -572,6 +611,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          family_code?: string | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           paid_at?: string
@@ -583,6 +623,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          family_code?: string | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           paid_at?: string
@@ -1556,6 +1597,7 @@ export type Database = {
           adm_no: string
           created_at: string
           dob: string | null
+          family_id: string | null
           first_name: string
           gender: string | null
           grade_id: string | null
@@ -1570,12 +1612,14 @@ export type Database = {
           stream_id: string | null
           student_id: string | null
           user_id: string | null
+          wallet_balance: number
           year_joined: number
         }
         Insert: {
           adm_no: string
           created_at?: string
           dob?: string | null
+          family_id?: string | null
           first_name: string
           gender?: string | null
           grade_id?: string | null
@@ -1590,12 +1634,14 @@ export type Database = {
           stream_id?: string | null
           student_id?: string | null
           user_id?: string | null
+          wallet_balance?: number
           year_joined?: number
         }
         Update: {
           adm_no?: string
           created_at?: string
           dob?: string | null
+          family_id?: string | null
           first_name?: string
           gender?: string | null
           grade_id?: string | null
@@ -1610,9 +1656,17 @@ export type Database = {
           stream_id?: string | null
           student_id?: string | null
           user_id?: string | null
+          wallet_balance?: number
           year_joined?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "students_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "students_grade_id_fkey"
             columns: ["grade_id"]
@@ -1986,6 +2040,11 @@ export type Database = {
       log_audit: {
         Args: { _action: string; _entity?: string; _entity_id?: string }
         Returns: undefined
+      }
+      next_fam_no: { Args: { _school_id: string }; Returns: string }
+      parent_family: {
+        Args: { _adm_no: string; _guardian_phone: string }
+        Returns: Json
       }
       parent_login: {
         Args: { _adm_no: string; _guardian_phone: string }
