@@ -43,6 +43,13 @@
       "when": 1793683775988,
       "tag": "0005_karlisoft_phase1_gateways_finance_notices",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793770289106,
+      "tag": "0006_create_families_and_links",
+      "breakpoints": true
     }
   ]
 }
