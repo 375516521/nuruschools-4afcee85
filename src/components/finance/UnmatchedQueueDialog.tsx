@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { assignUnmatchedTransaction } from "@/lib/finance.functions";
-import { splitFamilyManual } from "@/lib/family.functions";
+import { splitManualPayment } from "@/lib/family.functions";
 import { toast } from "sonner";
 import { Split, Check } from "lucide-react";
 
@@ -27,7 +27,7 @@ interface Props {
   } | null;
   schoolId: string;
   termId: string;
-  students: Array<{ id: string; adm_no: string; full_name: string; grade: string }>;
+  students: Array<{ id: string; adm_no: string; first_name: string; last_name: string; grade: string }>;
   onResolved: () => void;
 }
 
@@ -51,7 +51,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
   }
 
   const totalAllocated = splits.reduce((sum, s) => sum + (s.amount || 0), 0);
-  const remaining = transaction.amount - totalAllocated;
+  const remaining = (transaction?.amount ?? 0) - totalAllocated;
 
   async function handleAssign() {
     if (!selectedStudentId) {
@@ -85,13 +85,13 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
       return;
     }
     if (remaining !== 0) {
-      toast.error(`The split sum must equal KES ${transaction.amount.toLocaleString()}. Current difference: KES ${remaining.toLocaleString()}`);
+      toast.error(`The split sum must equal KES ${(transaction?.amount ?? 0).toLocaleString()}. Current difference: KES ${remaining.toLocaleString()}`);
       return;
     }
 
     setLoading(true);
     try {
-      const res = await splitFamilyManual({
+      const res = await splitManualPayment({
         data: {
           school_id: schoolId,
           term_id: termId,
@@ -116,7 +116,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
         <DialogHeader>
           <DialogTitle>Resolve Unmatched M-Pesa Payment</DialogTitle>
           <DialogDescription>
-            Reference: <span className="font-semibold text-foreground">{transaction.mpesa_receipt_number || transaction.account_reference}</span> • Phone: {transaction.phone} • Amount: <span className="font-bold text-emerald-600">KES {transaction.amount.toLocaleString()}</span>
+            Reference: <span className="font-semibold text-foreground">{transaction?.mpesa_receipt_number || transaction?.account_reference}</span> • Phone: {transaction?.phone} • Amount: <span className="font-bold text-emerald-600">KES {(transaction?.amount ?? 0).toLocaleString()}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +149,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
                 <option value="">-- Choose Learner --</option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.full_name} ({s.adm_no}) - {s.grade}
+                    {s.first_name} {s.last_name} ({s.adm_no}) - {s.grade}
                   </option>
                 ))}
               </select>
@@ -169,7 +169,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
                 <option value="">-- Pick Sibling --</option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.full_name} ({s.adm_no})
+                    {s.first_name} {s.last_name} ({s.adm_no})
                   </option>
                 ))}
               </select>
@@ -181,7 +181,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
                 return (
                   <div key={item.student_id} className="flex items-center gap-2 p-2 border rounded-md">
                     <div className="flex-1 text-xs">
-                      <p className="font-semibold">{child?.full_name}</p>
+                      <p className="font-semibold">{child?.first_name} {child?.last_name}</p>
                       <p className="text-muted-foreground">ADM: {child?.adm_no}</p>
                     </div>
                     <div className="w-32">
@@ -198,7 +198,7 @@ export function UnmatchedQueueDialog({ open, onOpenChange, transaction, schoolId
             </div>
 
             <div className="flex justify-between items-center text-xs p-2 bg-muted/50 rounded-md">
-              <span>Total: <strong>KES {transaction.amount.toLocaleString()}</strong></span>
+              <span>Total: <strong>KES {(transaction?.amount ?? 0).toLocaleString()}</strong></span>
               <span className={remaining === 0 ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
                 {remaining === 0 ? "Fully Allocated" : `Remaining: KES ${remaining.toLocaleString()}`}
               </span>
