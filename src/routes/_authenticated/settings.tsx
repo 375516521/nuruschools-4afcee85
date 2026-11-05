@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Loader2,
@@ -447,6 +447,11 @@ function SettingsInner() {
         .data,
   });
 
+  // Keep preview in sync with saved signature. Without this sigData stays null on reload.
+  useEffect(() => {
+    if (myProfile?.signature_url) setSigData(myProfile.signature_url);
+  }, [myProfile?.signature_url]);
+
   const saveSignature = useMutation({
     mutationFn: async () => {
       if (!sigData) throw new Error("Choose a signature image first.");
@@ -725,7 +730,7 @@ function SettingsInner() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button onClick={() => attach.mutate(undefined)} disabled={attach.isPending}>
+                    <Button type="button" onClick={() => attach.mutate(undefined)} disabled={attach.isPending}>
                       {attach.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Link
                     </Button>
                   </div>
@@ -795,6 +800,8 @@ function SettingsInner() {
                             setLogoData(await fileToDataUrl(f, 320));
                           } catch (err) {
                             toast.error((err as Error).message);
+                          } finally {
+                            e.target.value = "";
                           }
                         }}
                       />
@@ -862,6 +869,7 @@ function SettingsInner() {
                           {(st.grades as { name?: string } | null)?.name} · {st.name}
                         </span>
                         <Button
+                          type="button"
                           size="icon"
                           variant="ghost"
                           onClick={() => removeStream.mutate(st.id)}
@@ -933,6 +941,7 @@ function SettingsInner() {
                         <span className="flex items-center gap-2 text-xs text-muted-foreground">
                           {(s.grades as { name?: string } | null)?.name ?? "All grades"}
                           <Button
+                            type="button"
                             size="icon"
                             variant="ghost"
                             onClick={() => removeSubject.mutate(s.id)}
@@ -986,6 +995,7 @@ function SettingsInner() {
                           .map((t) => (
                             <Button
                               key={t.id}
+                              type="button"
                               size="sm"
                               variant={t.is_active ? "default" : "outline"}
                               disabled={activate.isPending || t.is_active}
@@ -1254,6 +1264,7 @@ function SettingsInner() {
                     </div>
                   </div>
                   <Button
+                    type="button"
                     className="w-full"
                     onClick={() => saveAccess.mutate()}
                     disabled={saveAccess.isPending || !accessUser}
@@ -1588,6 +1599,7 @@ function SettingsInner() {
                           </p>
                         </div>
                         <Button
+                          type="button"
                           size="icon"
                           variant="ghost"
                           className="size-7 text-muted-foreground hover:text-destructive"
@@ -1628,9 +1640,9 @@ function SettingsInner() {
                   lists next to your name.
                 </p>
                 <div className="mt-3 flex items-center gap-4">
-                  {sigData ?? myProfile?.signature_url ? (
+                  {sigData ? (
                     <img
-                      src={(sigData ?? myProfile?.signature_url)!}
+                      src={sigData}
                       alt="Signature preview"
                       className="h-12 object-contain"
                     />
@@ -1646,11 +1658,14 @@ function SettingsInner() {
                         setSigData(await fileToDataUrl(f, 420));
                       } catch (err) {
                         toast.error((err as Error).message);
+                      } finally {
+                        e.target.value = "";
                       }
                     }}
                   />
                 </div>
                 <Button
+                  type="button"
                   className="mt-3 w-full"
                   onClick={() => saveSignature.mutate()}
                   disabled={saveSignature.isPending || !sigData}
