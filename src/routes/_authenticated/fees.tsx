@@ -158,7 +158,7 @@ function FeesPage() {
           .from("students")
           .select("id, adm_no, first_name, last_name, grade_id, guardian_name, guardian_phone, wallet_balance, family_id, grades(name), streams(name)")
           .eq("school_id", schoolId!)
-          .eq("status", "active")
+          .eq("is_active", true)
           .order("adm_no")
       ).data ?? [],
   });
@@ -268,7 +268,7 @@ function FeesPage() {
           term_id: term.id,
           student_id: studentId,
           amount,
-          method: method as "mpesa",
+          payment_method: method as "mpesa",
           reference: String(form.get("reference") ?? "").trim() || null,
         })
         .select("*")
@@ -286,7 +286,7 @@ function FeesPage() {
           admNo: s.adm_no,
           grade: gradeLabel(s),
           amount: Number(p.amount),
-          method: p.method,
+          method: p.payment_method,
           reference: p.reference,
           paidAt: p.paid_at,
           balance,
@@ -382,7 +382,7 @@ function FeesPage() {
           .from("finance_expenses")
           .select("*")
           .eq("school_id", schoolId!)
-          .order("spent_on", { ascending: false })
+          .order("expense_date", { ascending: false })
       ).data ?? [],
   });
 
@@ -455,7 +455,6 @@ function FeesPage() {
           <TabsTrigger value="trialbalance">Trial Balance</TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: FEES & BALANCES */}
         <TabsContent value="fees" className="space-y-4">
           <div className="flex justify-between items-center">
             <Input
@@ -524,6 +523,14 @@ function FeesPage() {
                             </a>
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 text-xs"
+                          onClick={() => setDiscOpen(s.id)}
+                        >
+                          Discount
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -533,7 +540,6 @@ function FeesPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 2: UNMATCHED M-PESA QUEUE */}
         <TabsContent value="unmatched" className="space-y-4">
           <Card>
             <CardHeader>
@@ -563,7 +569,7 @@ function FeesPage() {
                         <TableCell className="text-xs">{new Date(tx.paid_at).toLocaleString()}</TableCell>
                         <TableCell className="font-mono font-medium">{tx.reference}</TableCell>
                         <TableCell className="font-semibold text-emerald-600">{ksh(Number(tx.amount))}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{tx.account_number || tx.phone || "—"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{tx.reference || "—"}</TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="outline" onClick={() => setAssignTx(tx)}>
                             Assign to Student
@@ -582,7 +588,6 @@ function FeesPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 3: CASH BOOK */}
         <TabsContent value="cashbook" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -630,7 +635,7 @@ function FeesPage() {
                     <TableRow key={p.id}>
                       <TableCell className="text-xs">{new Date(p.paid_at).toLocaleDateString()}</TableCell>
                       <TableCell className="font-medium text-xs">Fee Collection ({p.reference || "Direct"})</TableCell>
-                      <TableCell className="text-xs uppercase">{p.method}</TableCell>
+                      <TableCell className="text-xs uppercase">{p.payment_method}</TableCell>
                       <TableCell className="text-right text-emerald-600 font-semibold">+{ksh(Number(p.amount))}</TableCell>
                     </TableRow>
                   ))}
@@ -640,7 +645,6 @@ function FeesPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 4: BUDGET & EXPENSES */}
         <TabsContent value="expenses" className="space-y-4">
           <Card>
             <CardHeader>
@@ -660,7 +664,7 @@ function FeesPage() {
                 <TableBody>
                   {(expenses ?? []).map((e) => (
                     <TableRow key={e.id}>
-                      <TableCell className="text-xs">{e.spent_on}</TableCell>
+                      <TableCell className="text-xs">{e.expense_date}</TableCell>
                       <TableCell className="font-medium text-xs">{e.category}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{e.description || "—"}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">-{ksh(Number(e.amount))}</TableCell>
@@ -679,7 +683,6 @@ function FeesPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB 5: TRIAL BALANCE */}
         <TabsContent value="trialbalance" className="space-y-4">
           <Card>
             <CardHeader>
@@ -783,6 +786,64 @@ function FeesPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Discount */}
+      <Dialog open={!!discOpen} onOpenChange={(o) => !o && setDiscOpen(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Apply Discount</DialogTitle>
+            <DialogDescription>Reduce the billed amount for this learner for this term.</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              addDiscount.mutate(new FormData(e.currentTarget));
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <Label>Amount (KES)</Label>
+              <Input name="amount" type="number" min="1" step="any" required />
+            </div>
+            <div>
+              <Label>Reason</Label>
+              <Input name="reason" placeholder="e.g. Bursary" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setDiscOpen(null)}>Cancel</Button>
+              <Button type="submit" disabled={addDiscount.isPending}>Apply Discount</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Bulk Reminders */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Fee Reminders</DialogTitle>
+            <DialogDescription>{owingWithPhone.length} parents with phone numbers owe fees.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Grade Filter</Label>
+              <Select value={bulkGrade} onValueChange={setBulkGrade}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Grades</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-muted-foreground">This will open WhatsApp for each parent. Allow pop-ups.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button onClick={() => { sendAllReminders(); setBulkOpen(false); }}>
+              <Send className="w-4 h-4 mr-1" /> Send All Reminders
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
