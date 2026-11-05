@@ -34,6 +34,17 @@ function AuthPage() {
   const signInUsername = useServerFn(signInWithUsername);
   const [forgot, setForgot] = useState(false);
 
+  const authError = (msg: string) =>
+    toast.error(msg, { duration: 3000, position: "top-right", className: "!bg-destructive !text-destructive-foreground" });
+  const friendly = (m: string) => {
+    const t = m.toLowerCase();
+    if (t.includes("invalid login") || t.includes("password")) return "Wrong password";
+    if (t.includes("already") || t.includes("exists")) return "Email exists";
+    if (t.includes("phone")) return "Invalid phone";
+    if (t.includes("not found") || t.includes("no account") || t.includes("no user")) return "Account not found";
+    return m;
+  };
+
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -42,20 +53,20 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
       setBusy(false);
       if (error) {
-        toast.error(error.message === "Invalid login credentials" ? "Wrong email or password." : error.message);
+        authError(friendly(error.message));
         return;
       }
     } else {
       const res = await signInUsername({ data: { username: id, password } });
       if ("error" in res) {
         setBusy(false);
-        toast.error(res.error);
+        authError(friendly(res.error));
         return;
       }
       const { error } = await supabase.auth.setSession(res);
       setBusy(false);
       if (error) {
-        toast.error(error.message);
+        authError(friendly(error.message));
         return;
       }
     }
