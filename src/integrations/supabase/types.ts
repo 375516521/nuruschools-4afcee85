@@ -1065,6 +1065,7 @@ export type Database = {
           initiated_by: string | null
           merchant_request_id: string | null
           mpesa_receipt: string | null
+          payer_name: string | null
           payment_id: string | null
           phone: string
           result_code: string | null
@@ -1084,6 +1085,7 @@ export type Database = {
           initiated_by?: string | null
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
+          payer_name?: string | null
           payment_id?: string | null
           phone: string
           result_code?: string | null
@@ -1103,6 +1105,7 @@ export type Database = {
           initiated_by?: string | null
           merchant_request_id?: string | null
           mpesa_receipt?: string | null
+          payer_name?: string | null
           payment_id?: string | null
           phone?: string
           result_code?: string | null
@@ -1374,6 +1377,7 @@ export type Database = {
       }
       school_gateway_settings: {
         Row: {
+          callback_token: string
           created_at: string
           id: string
           mpesa_consumer_key: string | null
@@ -1383,11 +1387,13 @@ export type Database = {
           mpesa_shortcode: string | null
           mpesa_till: string | null
           school_id: string
+          store_name: string | null
           updated_at: string
           whatsapp_api_key: string | null
           whatsapp_sender: string | null
         }
         Insert: {
+          callback_token?: string
           created_at?: string
           id?: string
           mpesa_consumer_key?: string | null
@@ -1397,11 +1403,13 @@ export type Database = {
           mpesa_shortcode?: string | null
           mpesa_till?: string | null
           school_id: string
+          store_name?: string | null
           updated_at?: string
           whatsapp_api_key?: string | null
           whatsapp_sender?: string | null
         }
         Update: {
+          callback_token?: string
           created_at?: string
           id?: string
           mpesa_consumer_key?: string | null
@@ -1411,6 +1419,7 @@ export type Database = {
           mpesa_shortcode?: string | null
           mpesa_till?: string | null
           school_id?: string
+          store_name?: string | null
           updated_at?: string
           whatsapp_api_key?: string | null
           whatsapp_sender?: string | null

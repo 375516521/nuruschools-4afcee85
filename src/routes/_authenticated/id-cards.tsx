@@ -30,6 +30,22 @@ function IdCardsPage() {
   const schoolId = (session?.profile as { school_id?: string } | null)?.school_id ?? null;
   const school = session?.school as SchoolInfo;
   const qc = useQueryClient();
+  const [validUntil, setValidUntil] = useState("");
+  const { data: savedValid } = useQuery({
+    queryKey: ["id-valid", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      (await supabase.from("schools").select("id_card_valid_until").eq("id", schoolId!).maybeSingle()).data
+        ?.id_card_valid_until ?? "",
+  });
+  const validShown = validUntil || savedValid || `${new Date().getFullYear()}-12-31`;
+  async function saveValid(v: string) {
+    setValidUntil(v);
+    if (!schoolId) return;
+    const { error } = await supabase.from("schools").update({ id_card_valid_until: v || null }).eq("id", schoolId);
+    if (error) toast.error("Could not save the validity date.");
+    else toast.success("Validity date saved.");
+  }
   const [gradeId, setGradeId] = useState("");
 
   const { data: grades } = useQuery({
@@ -127,6 +143,10 @@ function IdCardsPage() {
             </Select>
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="valid">Valid until</Label>
+            <Input id="valid" type="date" value={validShown} onChange={(e) => void saveValid(e.target.value)} />
+          </div>
           {gradeId ? (
             <form
               key={gradeId}
@@ -232,7 +252,7 @@ function IdCardsPage() {
                   </div>
                 )}
                 <div className="min-w-0 flex-1 text-[11px] leading-snug">
-                  <p className="truncate font-display text-sm font-bold">
+                  <p className="truncate font-display text-sm font-bold" title={`${s.first_name} ${s.last_name}`}>
                     {s.first_name} {s.last_name}
                   </p>
                   <p className="text-muted-foreground">
@@ -255,8 +275,8 @@ function IdCardsPage() {
               <footer className="flex items-center justify-between border-t border-border bg-secondary/60 px-3 py-1.5 text-[8px] text-muted-foreground">
                 <span>
                   {school?.school_code}
-                  {school?.uli_code ? ` · ULI ${school.uli_code}` : ""} · Valid{" "}
-                  {new Date().getFullYear()}
+                  {school?.uli_code ? ` · ULI ${school.uli_code}` : ""} · Valid until{" "}
+                  {new Date(validShown).toLocaleDateString("en-KE")}
                 </span>
                 <span>{KARLI.name}</span>
               </footer>

@@ -16,7 +16,7 @@ export const signInWithUsername = createServerFn({ method: "POST" })
       .select("email")
       .ilike("username", data.username)
       .maybeSingle();
-    if (!row?.email) return { error: "Wrong username or password." } as const;
+    if (!row?.email) return { error: "Account not found" } as const;
     const { createClient } = await import("@supabase/supabase-js");
     const key = (process.env["SUPABASE_PUBLISHABLE_KEY"] ?? process.env["SUPABASE_ANON_KEY"])!;
     const client = createClient(process.env["SUPABASE_URL"]!, key, {
@@ -34,7 +34,7 @@ export const signInWithUsername = createServerFn({ method: "POST" })
       email: row.email,
       password: data.password,
     });
-    if (error || !res.session) return { error: "Wrong username or password." } as const;
+    if (error || !res.session) return { error: "Wrong password" } as const;
     return {
       access_token: res.session.access_token,
       refresh_token: res.session.refresh_token,

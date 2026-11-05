@@ -79,9 +79,9 @@ export const payFamily = createServerFn({ method: "POST" })
 
     const { data: structures } = await context.supabase
       .from("fee_structures")
-      .select("id, grade_id, amount, created_at")
+      .select("id, grade_id, amount, item")
       .eq("term_id", data.term_id)
-      .order("created_at");
+      .order("item");
     const { data: discounts } = await context.supabase
       .from("fee_discounts")
       .select("student_id, amount")
@@ -119,7 +119,7 @@ export const payFamily = createServerFn({ method: "POST" })
         const used = Math.min(credits, bal);
         bal -= used;
         credits -= used;
-        if (bal > 0) queue.push({ memberId: m.id, balance: bal, createdAt: f.created_at });
+        if (bal > 0) queue.push({ memberId: m.id, balance: bal, createdAt: f.item });
       }
     }
     queue.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));

@@ -436,7 +436,7 @@ function ExamsPage() {
               </p>
               <div className="grid gap-2">
                 {scaleDraft.map((b, i) => (
-                  <div key={i} className="grid grid-cols-[80px_1fr_70px_70px_auto] items-center gap-2">
+                  <div key={i} className="grid grid-cols-[70px_1fr_60px_60px_1.5fr_auto] items-center gap-2">
                     <Input
                       value={b.code}
                       aria-label="Band code"
@@ -472,6 +472,16 @@ function ExamsPage() {
                       onChange={(e) =>
                         setScaleDraft((p) =>
                           p.map((x, j) => (j === i ? { ...x, max: Number(e.target.value) } : x)),
+                        )
+                      }
+                    />
+                    <Input
+                      value={b.remark ?? ""}
+                      placeholder="Remark shown on report"
+                      aria-label="Band remark"
+                      onChange={(e) =>
+                        setScaleDraft((p) =>
+                          p.map((x, j) => (j === i ? { ...x, remark: e.target.value } : x)),
                         )
                       }
                     />

@@ -1,6 +1,6 @@
 import { GRADING_SCALE } from "@/lib/karli";
 
-export type GradeBand = { code: string; label: string; min: number; max: number };
+export type GradeBand = { code: string; label: string; min: number; max: number; remark?: string };
 
 export const DEFAULT_SCALE: GradeBand[] = GRADING_SCALE.map((g) => ({ ...g }));
 
@@ -15,6 +15,7 @@ export function parseScale(raw: unknown): GradeBand[] {
       label: String(b.label ?? b.code),
       min: Number(b.min),
       max: Number(b.max ?? 100),
+      remark: typeof b.remark === "string" ? b.remark : "",
     }))
     .sort((a, b) => b.min - a.min);
   return bands.length ? bands : DEFAULT_SCALE;

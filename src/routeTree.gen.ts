@@ -29,6 +29,7 @@ import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedTeachersRouteImport } from './routes/_authenticated/teachers'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as VerifyAdmRouteImport } from './routes/verify.$adm'
+import { Route as ApiPublicMpesaCallbackSchoolIdRouteImport } from './routes/api/public/mpesa/callback/$schoolId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -129,6 +130,12 @@ const VerifyAdmRoute = VerifyAdmRouteImport.update({
   path: '/verify/$adm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMpesaCallbackSchoolIdRoute =
+  ApiPublicMpesaCallbackSchoolIdRouteImport.update({
+    id: '/api/public/mpesa/callback/$schoolId',
+    path: '/api/public/mpesa/callback/$schoolId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/teachers': typeof AuthenticatedTeachersRoute
   '/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
+  '/api/public/mpesa/callback/$schoolId': typeof ApiPublicMpesaCallbackSchoolIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/teachers': typeof AuthenticatedTeachersRoute
   '/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
+  '/api/public/mpesa/callback/$schoolId': typeof ApiPublicMpesaCallbackSchoolIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/teachers': typeof AuthenticatedTeachersRoute
   '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/verify/$adm': typeof VerifyAdmRoute
+  '/api/public/mpesa/callback/$schoolId': typeof ApiPublicMpesaCallbackSchoolIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/teachers'
     | '/users'
     | '/verify/$adm'
+    | '/api/public/mpesa/callback/$schoolId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/teachers'
     | '/users'
     | '/verify/$adm'
+    | '/api/public/mpesa/callback/$schoolId'
   id:
     | '__root__'
     | '/'
@@ -260,6 +272,7 @@ export interface FileRouteTypes {
     | '/_authenticated/teachers'
     | '/_authenticated/users'
     | '/verify/$adm'
+    | '/api/public/mpesa/callback/$schoolId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -269,6 +282,7 @@ export interface RootRouteChildren {
   ParentRoute: typeof ParentRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   VerifyAdmRoute: typeof VerifyAdmRoute
+  ApiPublicMpesaCallbackSchoolIdRoute: typeof ApiPublicMpesaCallbackSchoolIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -413,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyAdmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mpesa/callback/$schoolId': {
+      id: '/api/public/mpesa/callback/$schoolId'
+      path: '/api/public/mpesa/callback/$schoolId'
+      fullPath: '/api/public/mpesa/callback/$schoolId'
+      preLoaderRoute: typeof ApiPublicMpesaCallbackSchoolIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -460,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentRoute: ParentRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   VerifyAdmRoute: VerifyAdmRoute,
+  ApiPublicMpesaCallbackSchoolIdRoute: ApiPublicMpesaCallbackSchoolIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
