@@ -73,6 +73,8 @@ const STATUSES = [
   "transferred_out",
 ] as const;
 
+type LearnerStatus = "active" | "archived" | "deactivated" | "graduated" | "transferred_out";
+
 const learnerSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required").max(60),
   last_name: z.string().trim().min(1, "Last name is required").max(60),
@@ -95,7 +97,7 @@ type Learner = {
   guardian_name: string | null;
   guardian_phone: string | null;
   photo_url: string | null;
-  status: string;
+  status: LearnerStatus;
   family_id?: string | null;
   families?: { fam_no?: string } | null;
   grades?: { name?: string } | null;
@@ -111,7 +113,7 @@ function StudentsPage() {
   const [status, setStatus] = useState<string>("active");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
-  const [gradeId, setGradeId] = useState<string>("all");
+  const [addGradeId, setAddGradeId] = useState<string>("");
   const [streamId, setStreamId] = useState<string>("");
 
   const [editing, setEditing] = useState<Learner | null>(null);
@@ -131,10 +133,10 @@ function StudentsPage() {
   });
 
   const { data: streams } = useQuery({
-    queryKey: ["streams", gradeId],
-    enabled: !!gradeId && gradeId !== "all",
+    queryKey: ["streams", addGradeId],
+    enabled: !!addGradeId,
     queryFn: async () =>
-      (await supabase.from("streams").select("*").eq("grade_id", gradeId).order("name")).data ?? [],
+      (await supabase.from("streams").select("*").eq("grade_id", addGradeId).order("name")).data ?? [],
   });
 
   const { data: editStreams } = useQuery({
@@ -142,6 +144,13 @@ function StudentsPage() {
     enabled: !!editGrade,
     queryFn: async () =>
       (await supabase.from("streams").select("*").eq("grade_id", editGrade).order("name")).data ?? [],
+  });
+
+  const { data: allStreams } = useQuery({
+    queryKey: ["streams", "all"],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      (await supabase.from("streams").select("*").order("name")).data ?? [],
   });
 
   const { data: students, isLoading } = useQuery({
@@ -153,14 +162,10 @@ function StudentsPage() {
         .select("*, grades(name), streams(name), families(fam_no)")
         .eq("school_id", schoolId!)
         .order("adm_no");
-      if (status !== "all") query = query.eq("status", status as "active");
-      const rows = ((await query).data ?? []) as unknown as Learner[];
-      const { data: allGrades } = await supabase.from("grades").select("id").eq("school_id", schoolId!);
-      const allowed = new Set((await onlyEnabledGrades(schoolId!, allGrades ?? [])).map((g) => g.id));
-      return rows.filter((r) => {
-        const gid = (r as { grade_id?: string | null }).grade_id;
-        return !gid || allowed.has(gid);
-      });
+      if (status !== "all") query = query.eq("status", status);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as unknown as Learner[];
     },
   });
 
@@ -170,7 +175,7 @@ function StudentsPage() {
         first_name: form.get("first_name"),
         last_name: form.get("last_name"),
         gender: form.get("gender") || null,
-        grade_id: gradeId,
+        grade_id: addGradeId,
         stream_id: streamId || null,
         guardian_name: form.get("guardian_name") || null,
         guardian_phone: form.get("guardian_phone") || null,
@@ -184,7 +189,7 @@ function StudentsPage() {
     onSuccess: () => {
       toast.success("Learner admitted — admission number and student ID generated.");
       setOpen(false);
-      setGradeId("all");
+      setAddGradeId("");
       setStreamId("");
       void qc.invalidateQueries({ queryKey: ["students"] });
     },
@@ -208,7 +213,6 @@ function StudentsPage() {
         .from("students")
         .update({ ...parsed.data, photo_url: editPhoto || null })
         .eq("id", editing.id);
-
       if (error) throw error;
     },
     onSuccess: () => {
@@ -226,7 +230,7 @@ function StudentsPage() {
       reason,
     }: {
       learner: Learner;
-      next: string;
+      next: LearnerStatus;
       reason?: string;
     }) => {
       const { error } = await supabase.from("students").update({ status: next }).eq("id", learner.id);
@@ -250,23 +254,20 @@ function StudentsPage() {
       const reason = String(form.get("reason") ?? "").trim();
       const feeCleared = form.get("fee_cleared") === "on";
       if (!dest) throw new Error("Destination school is required.");
-
       const { error: insErr } = await supabase.from("transfers").insert({
         school_id: schoolId!,
         student_id: transferring.id,
         transfer_type: "outgoing",
-        other_school: dest,
+        destination: dest,
         reason: reason || null,
-        fee_balance_cleared: feeCleared,
+        fee_cleared: feeCleared,
       });
       if (insErr) throw insErr;
-
       const { error: updErr } = await supabase
         .from("students")
         .update({ status: "transferred_out" })
         .eq("id", transferring.id);
       if (updErr) throw updErr;
-
       await logAudit("transfer_out", "students", transferring.id, { destination: dest, feeCleared });
     },
     onSuccess: () => {
@@ -299,7 +300,6 @@ function StudentsPage() {
   }
 
   const filtered = (students ?? []).filter((s) => {
-    if (gradeId !== "all" && s.grade_id !== gradeId) return false;
     const term = q.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -316,8 +316,8 @@ function StudentsPage() {
       subtitle={`${students?.length ?? 0} total enrolled`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {schoolId && <LearnerImport schoolId={schoolId} />}
-          <Dialog open={open} onOpenChange={setOpen}>
+          {schoolId && <LearnerImport schoolId={schoolId} grades={grades ?? []} streams={allStreams ?? []} />}
+          <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setAddGradeId(""); setStreamId(""); } }}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="size-4 mr-1" /> Add learner
@@ -350,7 +350,7 @@ function StudentsPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label>Grade</Label>
-                    <Select value={gradeId} onValueChange={setGradeId}>
+                    <Select value={addGradeId} onValueChange={(v) => { setAddGradeId(v); setStreamId(""); }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>
@@ -365,7 +365,7 @@ function StudentsPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Stream</Label>
-                    <Select value={streamId} onValueChange={setStreamId} disabled={!gradeId || gradeId === "all"}>
+                    <Select value={streamId} onValueChange={setStreamId} disabled={!addGradeId}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select stream" />
                       </SelectTrigger>
@@ -555,7 +555,6 @@ function StudentsPage() {
         </Table>
       </div>
 
-      {/* Edit learner */}
       <Dialog open={!!editing} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
           <DialogHeader>
@@ -608,7 +607,6 @@ function StudentsPage() {
                   ) : null}
                 </div>
               </div>
-
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="efn">First name</Label>
@@ -692,7 +690,6 @@ function StudentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Transfer out */}
       <Dialog open={!!transferring} onOpenChange={(v) => !v && setTransferring(null)}>
         <DialogContent>
           <DialogHeader>
@@ -728,7 +725,6 @@ function StudentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete (super admin only) */}
       <Dialog open={!!deleting} onOpenChange={(v) => !v && setDeleting(null)}>
         <DialogContent>
           <DialogHeader>
@@ -750,7 +746,6 @@ function StudentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* MODAL: Link as Family */}
       {familyTarget && schoolId && (
         <FamilyModal
           open={!!familyTarget}
@@ -764,7 +759,6 @@ function StudentsPage() {
   );
 }
 
-/** Inlined modal for linking family siblings */
 function FamilyModal({
   open,
   onOpenChange,
@@ -795,16 +789,12 @@ function FamilyModal({
         .neq("id", student.id)
         .eq("status", "active")
         .limit(20);
-
       if (q) {
         query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,adm_no.ilike.%${q}%,guardian_phone.ilike.%${q}%`);
       }
-
       const { data, error } = await query;
       if (error) throw error;
       setCandidates(data || []);
-
-      // Auto-select those with matching guardian phone
       if (student.guardian_phone) {
         const matches = (data || [])
           .filter((s: any) => s.guardian_phone && s.guardian_phone === student.guardian_phone)
@@ -826,16 +816,12 @@ function FamilyModal({
     setSaving(true);
     try {
       let targetFamilyId = student.family_id;
-
-      // If learner doesn't have a family_id, check if any selected sibling has one
       if (!targetFamilyId) {
         const siblingWithFamily = candidates.find((c) => selectedIds.includes(c.id) && c.family_id);
         if (siblingWithFamily) {
           targetFamilyId = siblingWithFamily.family_id;
         }
       }
-
-      // If still no family, create a new family record (trigger generates FAMxxx)
       if (!targetFamilyId) {
         const { data: newFam, error: famErr } = await supabase
           .from("families")
@@ -849,15 +835,12 @@ function FamilyModal({
         if (famErr) throw famErr;
         targetFamilyId = newFam.id;
       }
-
-      // Link all selected students + this student to the family
       const allStudentIds = [student.id, ...selectedIds];
       const { error: updErr } = await supabase
         .from("students")
         .update({ family_id: targetFamilyId })
         .in("id", allStudentIds);
       if (updErr) throw updErr;
-
       toast.success("Family linked successfully!");
       onSuccess();
       onOpenChange(false);
@@ -880,7 +863,6 @@ function FamilyModal({
             Search siblings by admission number, name, or guardian phone to group them under one family account.
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4 py-2">
           <div className="flex gap-2">
             <Input
@@ -893,7 +875,6 @@ function FamilyModal({
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </Button>
           </div>
-
           <div className="space-y-1.5 max-h-56 overflow-y-auto border rounded-md p-2">
             {candidates.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-6">
@@ -930,7 +911,6 @@ function FamilyModal({
             )}
           </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
