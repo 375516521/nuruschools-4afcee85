@@ -20,9 +20,10 @@ interface Props {
   student: {
     id: string;
     adm_no: string;
-    full_name: string;
+    first_name: string;
+    last_name: string;
     grade: string;
-    parent_phone: string;
+    guardian_phone: string;
     family_id?: string | null;
     school_id: string;
   };
@@ -48,21 +49,21 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
       if (student.family_id) {
         const { data: fam } = await supabase
           .from("families")
-          .select("family_code")
+          .select("fam_no")
           .eq("id", student.family_id)
           .maybeSingle();
-        if (fam) setExistingFamilyCode(fam.family_code);
+        if (fam) setExistingFamilyCode((fam as any).fam_no);
       } else {
         setExistingFamilyCode(null);
       }
 
-      if (student.parent_phone) {
-        const clean = student.parent_phone.replace(/\D/g, "").slice(-9);
+      if (student.guardian_phone) {
+        const clean = student.guardian_phone.replace(/\D/g, "").slice(-9);
         const { data: siblings } = await supabase
           .from("students")
-          .select("id, adm_no, full_name, grade, parent_phone, family_id")
+          .select("id, adm_no, first_name, last_name, grade, guardian_phone, family_id")
           .eq("school_id", student.school_id)
-          .ilike("parent_phone", `%${clean}%`)
+          .ilike("guardian_phone", `%${clean}%`)
           .neq("id", student.id);
 
         if (siblings && siblings.length > 0) {
@@ -81,9 +82,9 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
     try {
       const { data } = await supabase
         .from("students")
-        .select("id, adm_no, full_name, grade, parent_phone, family_id")
+        .select("id, adm_no, first_name, last_name, grade, guardian_phone, family_id")
         .eq("school_id", student.school_id)
-        .or(`adm_no.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%,parent_phone.ilike.%${searchTerm}%`)
+        .or(`adm_no.ilike.%${searchTerm}%,first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,guardian_phone.ilike.%${searchTerm}%`)
         .neq("id", student.id)
         .limit(10);
 
@@ -111,10 +112,10 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
           .from("families")
           .insert({
             school_id: student.school_id,
-            family_code: code,
-            primary_parent_name: student.full_name + " Parent",
-            primary_parent_phone: student.parent_phone,
-          })
+            fam_no: code,
+            primary_parent_name: student.first_name + " " + student.last_name + " Parent",
+            primary_parent_phone: student.guardian_phone,
+          } as any)
           .select()
           .single();
 
@@ -124,7 +125,7 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
 
       const { error: updateErr } = await supabase
         .from("students")
-        .update({ family_id: familyId })
+        .update({ family_id: familyId } as any)
         .in("id", selectedIds);
 
       if (updateErr) throw new Error(updateErr.message);
@@ -154,8 +155,8 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
 
         <div className="space-y-4 py-2">
           <div className="p-3 bg-muted/60 rounded-lg text-sm border">
-            <p className="font-semibold text-foreground">{student.full_name}</p>
-            <p className="text-xs text-muted-foreground">ADM: {student.adm_no} • Grade: {student.grade} • Phone: {student.parent_phone || "No phone"}</p>
+            <p className="font-semibold text-foreground">{student.first_name} {student.last_name}</p>
+            <p className="text-xs text-muted-foreground">ADM: {student.adm_no} • Grade: {student.grade} • Phone: {student.guardian_phone || "No phone"}</p>
             {existingFamilyCode && (
               <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 mt-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Assigned Code: {existingFamilyCode}
@@ -194,7 +195,7 @@ export function FamilyLinkDialog({ open, onOpenChange, student, onLinked }: Prop
                     }}
                   >
                     <div>
-                      <p className="font-medium">{s.full_name}</p>
+                      <p className="font-medium">{s.first_name} {s.last_name}</p>
                       <p className="text-xs text-muted-foreground">ADM: {s.adm_no} • {s.grade}</p>
                     </div>
                     <Checkbox checked={isSelected} />
