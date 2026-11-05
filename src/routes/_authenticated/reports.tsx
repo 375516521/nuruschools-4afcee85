@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { scoreToLevel } from "@/lib/karli";
+import { bandFor, parseScale } from "@/lib/grading";
 import { classTeacherComment, headTeacherComment } from "@/lib/report-comments";
 import { SchoolLetterhead, DocFooter, type SchoolInfo } from "@/components/SchoolLetterhead";
 
@@ -165,6 +166,47 @@ function ReportsPage() {
   });
 
   const examIds = (exams ?? []).map((e) => e.id);
+
+  const { data: scale } = useQuery({
+    queryKey: ["ry-scale", schoolId],
+    enabled: !!schoolId,
+    queryFn: async () =>
+      parseScale(
+        (await supabase.from("schools").select("grading_scale").eq("id", schoolId!).maybeSingle()).data
+          ?.grading_scale,
+      ),
+  });
+
+  // Term trend: mean score per term (T1-T3) for the selected year and grade.
+  const { data: trend } = useQuery({
+    queryKey: ["ry-trend", yearId, gradeId],
+    enabled: !!yearId && !!gradeId,
+    queryFn: async () => {
+      const { data: ex } = await supabase
+        .from("exams")
+        .select("id, max_score, terms(term_number)")
+        .eq("academic_year_id", yearId)
+        .eq("grade_id", gradeId);
+      const ids = (ex ?? []).map((e) => e.id);
+      if (!ids.length) return new Map<string, number[]>();
+      const { data: mk } = await supabase.from("marks").select("student_id, exam_id, score").in("exam_id", ids);
+      const termOf = new Map((ex ?? []).map((e) => [e.id, { t: (e as { terms?: { term_number?: number } }).terms?.term_number ?? 0, max: e.max_score || 100 }]));
+      const acc = new Map<string, { sum: number[]; n: number[] }>();
+      for (const m of mk ?? []) {
+        if (m.score === null) continue;
+        const info = termOf.get(m.exam_id);
+        if (!info || info.t < 1 || info.t > 3) continue;
+        const a = acc.get(m.student_id) ?? { sum: [0, 0, 0], n: [0, 0, 0] };
+        a.sum[info.t - 1]! += (Number(m.score) / info.max) * 100;
+        a.n[info.t - 1]! += 1;
+        acc.set(m.student_id, a);
+      }
+      const out = new Map<string, number[]>();
+      acc.forEach((a, k) => out.set(k, a.sum.map((v, i) => (a.n[i] ? v / a.n[i]! : NaN))));
+      return out;
+    },
+  });
+  const remarkFor = (v: number | null) => (v === null ? "" : (bandFor(v, 100, scale)?.remark ?? ""));
 
   const { data: marks } = useQuery({
     queryKey: ["ry-marks", examIds.join(",")],
@@ -429,7 +471,7 @@ function ReportsPage() {
           {shown.map((s) => {
             const { subjects, mean } = cardFor(s.id);
             return (
-              <div key={s.id} className="card-karli print-sheet break-after-page p-6">
+              <div key={s.id} className="card-karli print-sheet break-after-page border-4 border-double border-foreground p-6">
                 <SchoolLetterhead
                   school={school}
                   documentTitle="CBE Learner Report Card"
@@ -476,7 +518,7 @@ function ReportsPage() {
                   </div>
                 </div>
 
-                <table className="mt-4 w-full text-sm">
+                <table className="report-table mt-4 w-full border-collapse border border-foreground text-sm [&_td]:border [&_td]:border-foreground [&_td]:px-2 [&_th]:border [&_th]:border-foreground [&_th]:px-2">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="py-2">Learning area</th>
@@ -489,13 +531,14 @@ function ReportsPage() {
                         </th>
                       ))}
                       <th className="py-2 text-right">Level</th>
+                      <th className="py-2">Remarks</th>
                     </tr>
                   </thead>
                   <tbody>
                     {subjects.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={(exams?.length ?? 0) + 2}
+                          colSpan={(exams?.length ?? 0) + 3}
                           className="py-4 text-muted-foreground"
                         >
                           No marks recorded.
@@ -519,6 +562,7 @@ function ReportsPage() {
                               );
                             })}
                             <td className="py-2 text-right font-semibold">{scoreToLevel(avg)}</td>
+                            <td className="py-2 text-xs">{remarkFor(avg)}</td>
                           </tr>
                         );
                       })
@@ -532,6 +576,7 @@ function ReportsPage() {
                     <span className="font-semibold">{mean === null ? "-" : mean.toFixed(1)}</span> ·
                     Overall level: <span className="font-semibold">{scoreToLevel(mean)}</span>
                   </p>
+                  <TrendChart values={trend?.get(s.id) ?? [NaN, NaN, NaN]} />
                   <div className="mt-3 space-y-2">
                     <p>
                       <span className="font-semibold">Class teacher&apos;s remark:</span>{" "}
@@ -562,5 +607,30 @@ function ReportsPage() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+/** Small line graph of the learner's mean percentage across Term 1, 2 and 3. */
+function TrendChart({ values }: { values: number[] }) {
+  const W = 300, H = 90, pad = 20;
+  const pts = values.map((v, i) => ({ x: pad + (i * (W - 2 * pad)) / 2, y: Number.isNaN(v) ? null : H - pad - (v / 100) * (H - 2 * pad), v }));
+  const valid = pts.filter((p) => p.y !== null) as { x: number; y: number; v: number }[];
+  return (
+    <div className="mt-3">
+      <p className="mb-1 font-semibold">Term performance trend</p>
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-24 w-full max-w-sm border border-border">
+        <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} className="stroke-muted-foreground" strokeWidth={0.5} />
+        {valid.length > 1 ? (
+          <polyline points={valid.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" className="stroke-primary" strokeWidth={2} />
+        ) : null}
+        {pts.map((p, i) => (
+          <g key={i}>
+            {p.y !== null ? <circle cx={p.x} cy={p.y} r={3} className="fill-primary" /> : null}
+            {p.y !== null ? <text x={p.x} y={p.y - 6} textAnchor="middle" fontSize={9} className="fill-foreground">{p.v.toFixed(0)}%</text> : null}
+            <text x={p.x} y={H - 6} textAnchor="middle" fontSize={9} className="fill-muted-foreground">T{i + 1}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
