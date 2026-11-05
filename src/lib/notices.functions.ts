@@ -56,7 +56,7 @@ export const publishNotice = createServerFn({ method: "POST" })
       if (gw?.whatsapp_api_key && gw?.whatsapp_sender_id) {
         let q = supabaseAdmin
           .from("students")
-          .select("parent_phone, full_name")
+          .select("guardian_phone, first_name, last_name")
           .eq("school_id", data.school_id)
           .eq("is_active", true);
 
@@ -64,7 +64,7 @@ export const publishNotice = createServerFn({ method: "POST" })
         const { data: students } = await q;
 
         const phones = Array.from(
-          new Set((students || []).map((s) => s.parent_phone).filter(Boolean)),
+          new Set((students || []).map((s) => (s as any).guardian_phone).filter(Boolean)),
         );
 
         // Dispatches notice payload to WhatsApp gateway provider
