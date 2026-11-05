@@ -23,7 +23,7 @@ export const getCashBook = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: payments } = await context.supabase
       .from("fee_payments")
-      .select("amount, paid_at, reference, payment_method, students(full_name, adm_no)")
+      .select("amount, paid_at, reference, payment_method, students(first_name, last_name, adm_no)")
       .eq("school_id", data.school_id)
       .order("paid_at", { ascending: true });
 
@@ -36,10 +36,12 @@ export const getCashBook = createServerFn({ method: "GET" })
     const rows: Array<{ date: string; type: "in" | "out"; source: string; reference: string; amount: number }> = [];
 
     (payments || []).forEach((p) => {
+      const s = p.students as any;
+      const studentName = s ? `${s.first_name || ""} ${s.last_name || ""}`.trim() || "Learner" : "Learner";
       rows.push({
         date: p.paid_at,
         type: "in",
-        source: `Fee: ${(p.students as any)?.full_name || "Learner"} (${(p.students as any)?.adm_no || "N/A"})`,
+        source: `Fee: ${studentName} (${s?.adm_no || "N/A"})`,
         reference: p.reference || p.payment_method,
         amount: Number(p.amount),
       });
