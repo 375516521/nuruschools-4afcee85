@@ -158,7 +158,7 @@ function FeesPage() {
           .from("students")
           .select("id, adm_no, first_name, last_name, grade_id, guardian_name, guardian_phone, wallet_balance, family_id, grades(name), streams(name)")
           .eq("school_id", schoolId!)
-          .eq("is_active", true)
+          .eq("status", "active")
           .order("adm_no")
       ).data ?? [],
   });
@@ -382,7 +382,7 @@ function FeesPage() {
           .from("finance_expenses")
           .select("*")
           .eq("school_id", schoolId!)
-          .order("expense_date", { ascending: false })
+          .order("spent_on", { ascending: false })
       ).data ?? [],
   });
 
@@ -664,7 +664,7 @@ function FeesPage() {
                 <TableBody>
                   {(expenses ?? []).map((e) => (
                     <TableRow key={e.id}>
-                      <TableCell className="text-xs">{e.expense_date}</TableCell>
+                      <TableCell className="text-xs">{e.spent_on}</TableCell>
                       <TableCell className="font-medium text-xs">{e.category}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{e.description || "—"}</TableCell>
                       <TableCell className="text-right font-semibold text-destructive">-{ksh(Number(e.amount))}</TableCell>
