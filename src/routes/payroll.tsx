@@ -51,7 +51,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/payroll")({
+export const Route = createFileRoute("/payroll")({
   component: PayrollPage,
 });
 

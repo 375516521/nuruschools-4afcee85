@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ParentRouteImport } from './routes/parent'
+import { Route as PayrollRouteImport } from './routes/payroll'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAssetsRouteImport } from './routes/_authenticated/assets'
 import { Route as AuthenticatedAttendanceRouteImport } from './routes/_authenticated/attendance'
@@ -48,6 +49,11 @@ const AuthRoute = AuthRouteImport.update({
 const ParentRoute = ParentRouteImport.update({
   id: '/parent',
   path: '/parent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayrollRoute = PayrollRouteImport.update({
+  id: '/payroll',
+  path: '/payroll',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/payroll': typeof PayrollRoute
   '/reset-password': typeof ResetPasswordRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/payroll': typeof PayrollRoute
   '/reset-password': typeof ResetPasswordRoute
   '/assets': typeof AuthenticatedAssetsRoute
   '/attendance': typeof AuthenticatedAttendanceRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/parent': typeof ParentRoute
+  '/payroll': typeof PayrollRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/assets': typeof AuthenticatedAssetsRoute
   '/_authenticated/attendance': typeof AuthenticatedAttendanceRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/parent'
+    | '/payroll'
     | '/reset-password'
     | '/assets'
     | '/attendance'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/parent'
+    | '/payroll'
     | '/reset-password'
     | '/assets'
     | '/attendance'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/parent'
+    | '/payroll'
     | '/reset-password'
     | '/_authenticated/assets'
     | '/_authenticated/attendance'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ParentRoute: typeof ParentRoute
+  PayrollRoute: typeof PayrollRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   VerifyAdmRoute: typeof VerifyAdmRoute
   ApiPublicMpesaCallbackSchoolIdRoute: typeof ApiPublicMpesaCallbackSchoolIdRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       path: '/parent'
       fullPath: '/parent'
       preLoaderRoute: typeof ParentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payroll': {
+      id: '/payroll'
+      path: '/payroll'
+      fullPath: '/payroll'
+      preLoaderRoute: typeof PayrollRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ParentRoute: ParentRoute,
+  PayrollRoute: PayrollRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   VerifyAdmRoute: VerifyAdmRoute,
   ApiPublicMpesaCallbackSchoolIdRoute: ApiPublicMpesaCallbackSchoolIdRoute,
