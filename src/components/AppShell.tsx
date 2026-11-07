@@ -4,8 +4,9 @@ import {
   LayoutDashboard, Users, IdCard, ClipboardList, Wallet, Settings,
   LogOut, GraduationCap, Menu, FileText, ShieldCheck,
   CalendarCheck, BookOpen, Boxes, DollarSign, BarChart3, UserCog,
+  WifiOff, Wifi
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,15 +37,39 @@ const NAV = [
   { to: "/teachers", label: "Teachers", icon: UserCog },
   { to: "/payroll", label: "Payroll & Expenses", icon: DollarSign },
   { to: "/settings", label: "Settings", icon: Settings },
-  
 ] as const;
-
 
 const SUPER_NAV = [
   { to: "/users", label: "Users & Accounts", icon: ShieldCheck },
 ] as const;
 
+// --- OFFLINE HOOK & BANNER ---
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const offline = () => setIsOnline(false);
+    const online = () => setIsOnline(true);
+    window.addEventListener('offline', offline);
+    window.addEventListener('online', online);
+    return () => {
+      window.removeEventListener('offline', offline);
+      window.removeEventListener('online', online);
+    };
+  }, []);
+  return isOnline;
+}
 
+function OfflineBanner() {
+  const isOnline = useOnlineStatus();
+  if (isOnline) return null;
+  return (
+    <div className="flex items-center justify-center gap-2 bg-amber-400 px-4 py-2 text-sm font-medium text-black">
+      <WifiOff className="size-4" /> You are offline - app will work with cached data
+    </div>
+  );
+}
+// --- END OFFLINE ---
 
 export function useSession() {
   return useQuery({
@@ -117,8 +142,6 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-
-/** Super admin school switcher — lets the founder work inside any school they created. */
 function SchoolSwitcher() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -210,6 +233,7 @@ export function AppShell({ title, subtitle, actions, children }: {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
+        <OfflineBanner />
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card/85 px-4 py-3 backdrop-blur lg:px-8">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
