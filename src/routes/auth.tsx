@@ -36,41 +36,67 @@ function AuthPage() {
 
   const authError = (msg: string) =>
     toast.error(msg, { duration: 3000, position: "top-right", className: "!bg-destructive !text-destructive-foreground" });
+
   const friendly = (m: string) => {
     const t = m.toLowerCase();
-    if (t.includes("invalid login") || t.includes("password")) return "Wrong password";
+    if (t.includes("invalid login") || t.includes("password") || t.includes("invalid credentials") || t.includes("incorrect")) return "Wrong password";
     if (t.includes("already") || t.includes("exists")) return "Email exists";
     if (t.includes("phone")) return "Invalid phone";
-    if (t.includes("not found") || t.includes("no account") || t.includes("no user")) return "Account not found";
+    if (t.includes("not found") || t.includes("no account") || t.includes("no user") || t.includes("user not found") || t.includes("username not found")) return "Account not found";
     return m;
+  };
+
+  // Extract message from any error shape: thrown Error, TanStack error, {error: string}, {message}
+  const extractMessage = (err: any): string => {
+    if (!err) return "Login failed";
+    if (typeof err === "string") return err;
+    return err?.data?.message || err?.message || err?.error || err?.data?.error || "Login failed";
   };
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
-    const id = email.trim();
-    if (id.includes("@")) {
-      const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
-      setBusy(false);
-      if (error) {
-        authError(friendly(error.message));
+    try {
+      const id = email.trim();
+      if (!id || !password) {
+        authError("Enter your email/username and password");
         return;
       }
-    } else {
-      const res = await signInUsername({ data: { username: id, password } });
-      if ("error" in res) {
-        setBusy(false);
-        authError(friendly(res.error));
-        return;
+
+      if (id.includes("@")) {
+        const { error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
+        if (error) {
+          authError(friendly(error.message));
+          return;
+        }
+      } else {
+        // FIX: wrap in try/catch - signInUsername THROWS on failure now
+        let res: any;
+        try {
+          res = await signInUsername({ data: { username: id, password } });
+        } catch (err: any) {
+          authError(friendly(extractMessage(err)));
+          return;
+        }
+
+        if (res && "error" in res && res.error) {
+          authError(friendly(typeof res.error === "string" ? res.error : extractMessage(res.error)));
+          return;
+        }
+
+        const { error } = await supabase.auth.setSession(res);
+        if (error) {
+          authError(friendly(error.message));
+          return;
+        }
       }
-      const { error } = await supabase.auth.setSession(res);
-      setBusy(false);
-      if (error) {
-        authError(friendly(error.message));
-        return;
-      }
+      navigate({ to: "/dashboard" });
+    } catch (err: any) {
+      authError(friendly(extractMessage(err)));
+    } finally {
+      setBusy(false); // FIX: always unstuck button
     }
-    navigate({ to: "/dashboard" });
   }
 
   /** Emails a reset link and logs the request so the super admin is notified. */
@@ -82,30 +108,37 @@ function AuthPage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(target, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    await supabase.rpc("record_password_reset", { _email: target, _stage: "requested" });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      await supabase.rpc("record_password_reset", { _email: target, _stage: "requested" });
+      toast.success("Check your email for the reset link.");
+      setForgot(false);
+    } catch (err: any) {
+      toast.error(friendly(extractMessage(err)));
+    } finally {
+      setBusy(false);
     }
-    toast.success("Check your email for the reset link.");
-    setForgot(false);
   }
-
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) {
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+      if (result.error) {
+        toast.error("Google sign-in failed. Please try again.");
+        return;
+      }
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
+    } catch {
       toast.error("Google sign-in failed. Please try again.");
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
   }
-
 
   return (
     <div className="grid min-h-screen bg-karli-hero px-4 py-10 place-items-center">
@@ -172,4 +205,4 @@ function AuthPage() {
       </div>
     </div>
   );
-}
+                                      }
