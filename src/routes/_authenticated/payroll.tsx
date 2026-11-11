@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SchoolLetterhead } from "@/components/SchoolLetterhead";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, useSession } from "@/components/AppShell";
 import { toast } from "sonner";
 import {
   DollarSign,
@@ -74,22 +74,8 @@ export default function PayrollPage() {
     description: "",
   });
 
-  const { data: profile } = useQuery({
-    queryKey: ["current-user-school"],
-    queryFn: async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      if (!authData.user) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("school_id, full_name, signature_url, schools(*)")
-        .eq("id", authData.user.id)
-        .single();
-      return data;
-    },
-  });
-
-  const schoolId = profile?.school_id;
-  const school = profile?.schools;
+  // FIX 3: Use useSession - respects Superadmin School Switcher
+  const { schoolId, school, profile } = useSession() as any;
 
   const { data: payroll = [], isLoading: isLoadingPayroll } = useQuery({
     queryKey: ["payroll", schoolId, selectedMonth],
@@ -184,27 +170,24 @@ export default function PayrollPage() {
     const w = window.open("", "_blank");
     if (!w) return;
     const rows = payroll.map((p) => `<tr><td>${p.staff_name}</td><td>${p.staff_title || ""}</td><td style="text-align:right">${p.basic_salary.toLocaleString()}</td><td style="text-align:right">${p.allowances.toLocaleString()}</td><td style="text-align:right">${(p.deduction_nssf + p.deduction_nhif + p.deduction_paye + p.other_deductions).toLocaleString()}</td><td style="text-align:right"><b>${p.net_pay.toLocaleString()}</b></td><td>${p.status}</td></tr>`).join("");
-    w.document.write(`<html><head><title>Payroll Register ${selectedMonth}</title><style>body{font-family:Arial;padding:20px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #000;padding:6px;font-size:12px} h2{text-align:center}</style></head><body><h2>${(school as any)?.name || "School"} - Monthly Payroll Register</h2><p style="text-align:center">Month: ${selectedMonth} | Total: KES ${totalPayroll.toLocaleString()} | Paid: KES ${totalPaid.toLocaleString()} | Pending: KES ${totalUnpaid.toLocaleString()}</p><table><thead><tr><th>Staff</th><th>Title</th><th>Basic</th><th>Allowances</th><th>Total Deductions</th><th>Net Pay</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+    w.document.write(`<html><head><title>Payroll Register ${selectedMonth}</title><style>body{font-family:Arial;padding:20px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #000;padding:6px;font-size:12px} h2{text-align:center}</style></head><body><h2>${(school as any)?.name || "School"} - Monthly Payroll Register</h2><p style="text-align:center">Month: ${selectedMonth} | Total: KES ${totalPayroll.toLocaleString()}</p><table><thead><tr><th>Staff</th><th>Title</th><th>Basic</th><th>Allowances</th><th>Total Deductions</th><th>Net Pay</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
     w.document.close();
     w.print();
   }
 
+  // FIX 2: AppShell requires title
   return (
-    <AppShell>
+    <AppShell title="Staff Payroll & Expenses">
     <div className="space-y-6 p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Staff Payroll & Expenses</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage teacher and staff salaries, statutory deductions, net payouts, and operational expenses.
-          </p>
+          <p className="text-sm text-muted-foreground">Manage teacher and staff salaries, statutory deductions, net payouts, and operational expenses.</p>
         </div>
         <div className="flex items-center gap-2">
           <Label htmlFor="month-select" className="text-xs font-semibold uppercase">Month:</Label>
           <Input id="month-select" type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="w-44" />
-          <Button variant="outline" onClick={printPayrollRegister} className="gap-2">
-            <FileSpreadsheet className="w-4 h-4" /> Export Payroll Register PDF
-          </Button>
+          <Button variant="outline" onClick={printPayrollRegister} className="gap-2"><FileSpreadsheet className="w-4 h-4" /> Export Payroll Register PDF</Button>
         </div>
       </div>
 
@@ -223,9 +206,7 @@ export default function PayrollPage() {
 
         <TabsContent value="payroll" className="space-y-4">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div><CardTitle>Staff Salary Roll ({selectedMonth})</CardTitle><CardDescription>Basic salaries, NHIF, NSSF, PAYE, and Net Pay calculation.</CardDescription></div>
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between"><div><CardTitle>Staff Salary Roll ({selectedMonth})</CardTitle><CardDescription>Basic salaries, NHIF, NSSF, PAYE, and Net Pay calculation.</CardDescription></div></CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
                 <TableHeader><TableRow><TableHead>Staff Member</TableHead><TableHead className="text-right">Basic</TableHead><TableHead className="text-right">Allowances</TableHead><TableHead className="text-right">NSSF / NHIF / PAYE</TableHead><TableHead className="text-right font-bold">Net Pay</TableHead><TableHead className="text-center">Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
@@ -327,7 +308,8 @@ export default function PayrollPage() {
           <DialogContent className="max-w-md">
             <DialogHeader><DialogTitle>Payslip - {payslipItem.staff_name}</DialogTitle></DialogHeader>
             <div className="space-y-2 text-sm">
-              <SchoolLetterhead school={school as any} />
+              {/* FIX 2: SchoolLetterhead requires documentTitle */}
+              <SchoolLetterhead school={school as any} documentTitle="STAFF PAYSLIP" />
               <p className="text-center font-bold">Month: {selectedMonth}</p>
               <div className="flex justify-between"><span>Basic Salary</span><span>KES {payslipItem.basic_salary.toLocaleString()}</span></div>
               <div className="flex justify-between"><span>Allowances</span><span>+ KES {payslipItem.allowances.toLocaleString()}</span></div>
